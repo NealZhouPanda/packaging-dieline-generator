@@ -15,7 +15,11 @@
     ["C001GX · 锁底自扣盒", "C001GX · Lock-bottom carton"],
     ["输入刀模尺寸", "Enter dieline dimensions"],
     ["单位：毫米 mm", "Unit: mm"],
+    ["纸型", "Material"],
+    ["瓦楞纸板", "Corrugated board"],
+    ["白卡纸", "White folding boxboard"],
     ["瓦楞楞型", "Flute"],
+    ["白卡纸厚度（mm）", "White board caliper (mm)"],
     ["自定义纸厚…", "Custom caliper…"],
     ["自定义纸厚（1.5–5.0 mm）", "Custom caliper (1.5–5.0 mm)"],
     ["C001GX 插舌样式", "C001GX tongue style"],
@@ -85,6 +89,8 @@
     if (m) return `${leading}${m[1]} is outside the verified range (${m[2]}–${m[3]} mm); this size is not calibrated and cannot generate a dieline${trailing}`;
     m = text.match(/^刀线轮廓未闭合：(.+) 段未能串联$/);
     if (m) return `${leading}Dieline contour is not closed: ${m[1]} segments could not be joined${trailing}`;
+    m = text.match(/^(.+m²)\n([0-9.]+)个\/张$/);
+    if (m) return `${leading}${m[1]}\n${m[2]} / sheet${trailing}`;
     m = text.match(/^([0-9.]+)个\/张$/);
     if (m) return `${leading}${m[1]} / sheet${trailing}`;
     m = text.match(/^抛重 (.+) kg$/);
