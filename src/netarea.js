@@ -1,0 +1,149 @@
+const POINT_TOLERANCE = 0.01;
+const key = (x, y) => `${Math.round(x / POINT_TOLERANCE)}:${Math.round(y / POINT_TOLERANCE)}`;
+
+function endpoints(element) {
+  if (element[0] === 0) {
+    return { start: [element[2], element[3]], end: [element[4], element[5]] };
+  }
+  if (element[0] === 1) {
+    const [, , cx, cy, r, start, end] = element;
+    const rad = (d) => (d * Math.PI) / 180;
+    return {
+      start: [cx + r * Math.cos(rad(start)), cy + r * Math.sin(rad(start))],
+      end: [cx + r * Math.cos(rad(end)), cy + r * Math.sin(rad(end))],
+    };
+  }
+  throw new TypeError(`Unsupported element type: ${element[0]}`);
+}
+
+/** 把圆弧细分为折线点列（含首尾），用于面积积分。 */
+function arcPoints(element, steps = 16) {
+  const [, , cx, cy, r, start, end] = element;
+  const span = (((end - start) % 360) + 360) % 360;
+  const points = [];
+  for (let i = 0; i <= steps; i += 1) {
+    const angle = ((start + (span * i) / steps) * Math.PI) / 180;
+    points.push([cx + r * Math.cos(angle), cy + r * Math.sin(angle)]);
+  }
+  return points;
+}
+
+/**
+ * 将全部刀线（kind=0）按端点串成闭合轮廓，返回净面积（mm²）。
+ * 0202A 的所有槽口都开在坯料边缘，因此全部刀线构成单条闭合轮廓。
+ * 段可以正向或反向串联（数据中段的存储方向不保证一致）。
+ */
+export function netArea(elements) {
+  const cuts = elements.filter((element) => element[1] === 0);
+  const unused = new Set(cuts.map((_, index) => index));
+  const adjacent = new Map();
+  cuts.forEach((element, index) => {
+    const { start, end } = endpoints(element);
+    for (const pointKey of [key(...start), key(...end)]) {
+      const bucket = adjacent.get(pointKey) ?? [];
+      bucket.push(index);
+      adjacent.set(pointKey, bucket);
+    }
+  });
+
+  const chain = [{ index: 0, reversed: false }];
+  unused.delete(0);
+  const takeNext = (pointKey) => {
+    for (const index of adjacent.get(pointKey) ?? []) {
+      if (!unused.has(index)) continue;
+      unused.delete(index);
+      const { start } = endpoints(cuts[index]);
+      return { index, reversed: key(...start) !== pointKey };
+    }
+    return null;
+  };
+
+  // 先向尾部生长，卡住后从头部反向生长
+  let tail = endpoints(cuts[0]).end;
+  while (unused.size > 0) {
+    const next = takeNext(key(...tail));
+    if (!next) break;
+    chain.push(next);
+    const { start, end } = endpoints(cuts[next.index]);
+    tail = next.reversed ? start : end;
+  }
+  let head = endpoints(cuts[0]).start;
+  while (unused.size > 0) {
+    const next = takeNext(key(...head));
+    if (!next) break;
+    chain.unshift(next);
+    const { start, end } = endpoints(cuts[next.index]);
+    head = next.reversed ? start : end;
+  }
+  if (unused.size > 0) {
+    throw new Error(`刀线轮廓未闭合：${unused.size} 段未能串联`);
+  }
+  if (key(...head) !== key(...tail)) {
+    throw new Error("刀线轮廓首尾不相接");
+  }
+
+  const polygon = [];
+  for (const { index, reversed } of chain) {
+    const element = cuts[index];
+    let points = element[0] === 0 ? [endpoints(element).start] : arcPoints(element).slice(0, -1);
+    if (reversed) {
+      points = element[0] === 0 ? [endpoints(element).end] : arcPoints(element).slice(1).reverse();
+    }
+    polygon.push(...points);
+  }
+
+  let twice = 0;
+  for (let i = 0; i < polygon.length; i += 1) {
+    const [x1, y1] = polygon[i];
+    const [x2, y2] = polygon[(i + 1) % polygon.length];
+    twice += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(twice) / 2;
+}
+
+/**
+ * 0202A 专用换算（换箱型不能套用）。
+ * 刀模 = 内 + T/2；开箱面（L×W）外尺寸 = 内 + 2T（两次折叠）；
+ * 高 D 外 = 内 + T；四侧面高度分高低两组，差距 2T。
+ */
+export function dieSize({ length, width, depth, caliper }) {
+  const half = caliper / 2;
+  return {
+    length: length + half,
+    width: width + half,
+    depth: depth + half,
+  };
+}
+
+/** 外尺寸：开箱面 L/W 加 2 倍纸厚，高 D 加 1 倍纸厚。 */
+export function outerSize({ length, width, depth, caliper }) {
+  return {
+    length: length + 2 * caliper,
+    width: width + 2 * caliper,
+    depth: depth + caliper,
+  };
+}
+
+/** 四侧面高度：高位 / 低位，差距 2×纸厚。 */
+export function sideHeights({ depth, caliper }) {
+  const dieDepth = depth + caliper / 2;
+  return { high: dieDepth + caliper, low: dieDepth - caliper };
+}
+
+/** 抛重按外尺寸估算，单位 kg。 */
+export function volumetricWeightKg(parameters, ratio) {
+  const outer = outerSize(parameters);
+  const cm = [outer.length, outer.width, outer.depth].map((mm) => mm / 10);
+  return (cm[0] * cm[1] * cm[2]) / ratio;
+}
+
+/** 三边和按外尺寸，单位 cm。 */
+export function sideSumCm(parameters) {
+  const outer = outerSize(parameters);
+  return (outer.length + outer.width + outer.depth) / 10;
+}
+export function blanksPerSheet(blankWidth, blankHeight, maxW, maxL) {
+  const normal = Math.floor(maxW / blankWidth) * Math.floor(maxL / blankHeight);
+  const rotated = Math.floor(maxW / blankHeight) * Math.floor(maxL / blankWidth);
+  return Math.max(normal, rotated);
+}

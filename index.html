@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="离线包装刀模生成器" />
+    <title>包装刀模生成器</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">内部工具 · 尺寸仅在本机计算</p>
+          <h1>包装刀模生成器</h1>
+        </div>
+        <div class="status" aria-label="运行状态"><span></span>离线可计算</div>
+      </header>
+
+      <section class="layout">
+        <aside class="controls" aria-label="刀模参数">
+          <div class="section-heading">
+            <span>01</span>
+            <div><h2>选择箱型</h2><p>当前开放一个已校准结构</p></div>
+          </div>
+
+          <label class="field">
+            <span>箱型</span>
+            <select id="boxType">
+              <option value="0202A">0202A · 普通开槽纸箱</option>
+            </select>
+          </label>
+
+          <div class="section-heading compact">
+            <span>02</span>
+            <div><h2>输入内尺寸</h2><p>单位：毫米 mm</p></div>
+          </div>
+
+          <div class="dimension-grid">
+            <label class="field"><span>长 L（200–2000）</span><input id="length" type="number" min="200" max="2000" step="0.1" value="405" inputmode="decimal" /></label>
+            <label class="field"><span>宽 W（120–1200）</span><input id="width" type="number" min="120" max="1200" step="0.1" value="299" inputmode="decimal" /></label>
+            <label class="field"><span>高 D（50–1500）</span><input id="depth" type="number" min="50" max="1500" step="0.1" value="650" inputmode="decimal" /></label>
+            <label class="field"><span>瓦楞楞型</span><select id="flute">
+              <option value="2">E 楞 2.0</option>
+              <option value="3">B 楞 3.0</option>
+              <option value="4">C 楞 4.0</option>
+              <option value="5" selected>A 楞 5.0</option>
+              <option value="custom">自定义纸厚…</option>
+            </select></label>
+          </div>
+
+          <label class="field" id="customCaliperRow" hidden>
+            <span>自定义纸厚（1.5–5.0 mm）</span>
+            <input id="caliper" type="number" min="1.5" max="5" step="0.1" value="3" inputmode="decimal" />
+          </label>
+
+          <div class="section-heading compact">
+            <span>03</span>
+            <div><h2>开口方向</h2><p>开口面 = 摇盖所在面，点击切换数据位置</p></div>
+          </div>
+
+          <div class="face-selector" role="radiogroup" aria-label="开口方向">
+            <button type="button" class="face-option" data-face="big" role="radio" aria-checked="false">
+              <svg viewBox="0 0 64 48" aria-hidden="true">
+                <polygon points="8,24 48,24 48,38 8,38" />
+                <polygon points="8,24 16,14 56,14 48,24" class="lid" />
+                <polygon points="48,24 56,14 56,28 48,38" />
+                <line x1="12" y1="19" x2="52" y2="19" class="flap-line" />
+              </svg>
+              <span>大面</span>
+              <span class="face-data" data-face-data="big">—</span>
+            </button>
+            <button type="button" class="face-option" data-face="mid" role="radio" aria-checked="false">
+              <svg viewBox="0 0 64 48" aria-hidden="true">
+                <polygon points="20,18 44,18 44,38 20,38" />
+                <polygon points="20,18 27,10 51,10 44,18" class="lid" />
+                <polygon points="44,18 51,10 51,30 44,38" />
+                <line x1="23" y1="14" x2="48" y2="14" class="flap-line" />
+              </svg>
+              <span>中面</span>
+              <span class="face-data" data-face-data="mid">—</span>
+            </button>
+            <button type="button" class="face-option" data-face="small" role="radio" aria-checked="false">
+              <svg viewBox="0 0 64 48" aria-hidden="true">
+                <polygon points="24,14 40,14 40,40 24,40" />
+                <polygon points="24,14 29,8 45,8 40,14" class="lid" />
+                <polygon points="40,14 45,8 45,34 40,40" />
+                <line x1="26" y1="11" x2="43" y2="11" class="flap-line" />
+              </svg>
+              <span>小面</span>
+              <span class="face-data" data-face-data="small">—</span>
+            </button>
+          </div>
+
+          <div class="section-heading compact">
+            <span>04</span>
+            <div><h2>抛重估算</h2><p>体积重量 = 外尺寸乘积 ÷ 抛比（外尺寸按内尺寸+纸厚估算）</p></div>
+          </div>
+
+          <div class="courier-params">
+            <label>三边和限制 cm
+              <input id="sideSumLimit" type="number" min="1" step="1" value="100" inputmode="decimal" />
+            </label>
+            <label>抛比
+              <select id="dimRatio">
+                <option value="5000">5000</option>
+                <option value="6000">6000</option>
+                <option value="8000" selected>8000</option>
+                <option value="12000">12000</option>
+              </select>
+            </label>
+          </div>
+          <div class="vol-weight-result" id="volWeightResult" hidden>
+            <span id="volWeightNote">已超抛，抛重为：</span>
+            <strong id="volWeight">—</strong>
+          </div>
+
+          <p id="materialWarning" class="material-warning" role="alert" hidden></p>
+          <p id="error" class="error" role="alert" hidden></p>
+
+          <div class="summary" aria-live="polite">
+            <div><span>展开宽</span><strong id="sheetWidth">—</strong></div>
+            <div><span>展开高</span><strong id="sheetHeight">—</strong></div>
+          </div>
+
+          <div class="download-dock">
+            <div class="download-row">
+              <button id="download" class="primary" type="button">下载 SVG</button>
+              <button id="downloadPdf" class="primary secondary" type="button">下载 PDF</button>
+            </div>
+            <p class="fineprint">Developed by Neal Zhou</p>
+          </div>
+        </aside>
+
+        <section class="preview-panel" aria-label="刀模预览">
+          <div class="preview-toolbar">
+            <div>
+              <span class="file-label">刀模文件名（可改，下载时自动加 .svg / .pdf）</span>
+              <input id="filename" class="file-name-input" value="0202A_L405_W299_D650_C5" spellcheck="false" />
+            </div>
+            <div class="legend"><span class="cut-key"></span>刀线 <span class="fold-key"></span>压痕线</div>
+          </div>
+          <div id="preview" class="preview" aria-label="二维刀模图"></div>
+          <div class="calibration-note">
+            <strong>注意</strong>
+            <span>首次投产前先打样核对。</span>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

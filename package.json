@@ -1,0 +1,17 @@
+{
+  "name": "packaging-dieline-generator",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "build:offline": "node tools/build-single-html.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vite": "^7.1.1",
+    "vitest": "^3.2.4"
+  }
+}
