@@ -6,10 +6,10 @@
     ["运行状态", "Runtime status"],
     ["刀模参数", "Dieline parameters"],
     ["选择箱型", "Select box type"],
-    ["当前开放 0201、0202A、E005C 与 C001GX 四款结构", "Four box styles available: 0201, 0202A, E005C, C001GX"],
+    ["当前开放 0201、E005C 与 C001GX 三款结构", "Three box styles available: 0201, E005C, C001GX"],
     ["箱型", "Box type"],
     ["0201 · 标准纸箱", "0201 · Standard carton"],
-    ["0202A · 普通开槽纸箱", "0202A · Regular slotted carton"],
+
     ["E005C · 翻盖飞机盒（0427）", "E005C · Flip-top mailer (0427)"],
     ["C001GX · 锁底自扣盒", "C001GX · Lock-bottom carton"],
     ["输入刀模尺寸", "Enter dieline dimensions"],
