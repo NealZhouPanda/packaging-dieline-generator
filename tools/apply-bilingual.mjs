@@ -12,6 +12,5 @@ const tag = new RegExp(`<script ${marker}>[\\s\\S]*?<\\/script>`);
 const injected = html.includes(marker)
   ? html.replace(tag, `<script ${marker}>${overlay}</script>`)
   : html.replace("</body>", `<script ${marker}>${overlay}</script>\n</body>`);
-if (injected === html) throw new Error("Could not update bilingual overlay in app HTML");
-await writeFile(appPath, injected);
+if (injected !== html) await writeFile(appPath, injected);
 console.log(appPath);
