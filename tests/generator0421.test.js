@@ -24,6 +24,21 @@ describe("0421 flip-top display box", () => {
     expect(geometry.parameters.slotCount).toBe(2);
   });
 
+  it("generates the white-card variant for the display box", () => {
+    const geometry = generate0421({
+      length: 300,
+      width: 200,
+      depth: 100,
+      caliper: 0.5,
+      paperType: "white-card",
+    });
+
+    expect(geometry.parameters.paperType).toBe("white-card");
+    expect(geometry.meta.width).toBe(702.28);
+    expect(geometry.meta.height).toBe(699);
+    expect(geometry.elements.length).toBe(90);
+  });
+
   it("keeps the exported canvas aligned with the boundary geometry", () => {
     const geometry = generate0421({ length: 600, width: 400, depth: 50, caliper: 1.5 });
 

@@ -27,6 +27,7 @@ const materialWarning = document.querySelector("#materialWarning");
 const dimRatioSelect = document.querySelector("#dimRatio");
 const sideSumLimitInput = document.querySelector("#sideSumLimit");
 const fluteSelect = document.querySelector("#flute");
+const fluteLabel = fluteSelect?.parentElement?.querySelector("span");
 const customCaliperRow = document.querySelector("#customCaliperRow");
 const customCaliperInput = document.querySelector("#caliper");
 const preview = document.querySelector("#preview");
@@ -38,13 +39,44 @@ const filenameInput = document.querySelector("#filename");
 let currentGeometry = null;
 let currentSvg = "";
 let userEditedFilename = false;
+const corrugatedFluteOptions = fluteSelect?.innerHTML || "";
+let materialMode = paperTypeSelect?.value === "white-card" ? "white-card" : "corrugated";
+let corrugatedFluteValue = fluteSelect?.value || "5";
+let whiteCardCaliperValue = "0.5";
+
+function syncMaterialControls() {
+  if (!fluteSelect || !paperTypeSelect) return;
+
+  const isWhiteCard = paperTypeSelect.value === "white-card";
+  if (isWhiteCard && materialMode !== "white-card") {
+    corrugatedFluteValue = fluteSelect.value;
+    fluteSelect.innerHTML = `
+      <option value="0.4">0.4</option>
+      <option value="0.5">0.5</option>
+      <option value="0.6">0.6</option>
+      <option value="0.8">0.8</option>`;
+    fluteSelect.value = whiteCardCaliperValue;
+  } else if (!isWhiteCard && materialMode !== "corrugated") {
+    whiteCardCaliperValue = fluteSelect.value;
+    fluteSelect.innerHTML = corrugatedFluteOptions;
+    fluteSelect.value = corrugatedFluteValue;
+  }
+
+  materialMode = isWhiteCard ? "white-card" : "corrugated";
+  if (fluteLabel) fluteLabel.textContent = isWhiteCard ? "白卡纸厚度（mm）" : "瓦楞楞型";
+  customCaliperRow.hidden = isWhiteCard || fluteSelect.value !== "custom";
+}
 
 function values() {
   const dimensions = Object.fromEntries(
     Object.entries(inputs).map(([key, input]) => [key, Number(input.value)]),
   );
   dimensions.caliper =
-    fluteSelect.value === "custom" ? Number(customCaliperInput.value) : Number(fluteSelect.value);
+    paperTypeSelect?.value === "white-card"
+      ? Number(fluteSelect.value)
+      : fluteSelect.value === "custom"
+        ? Number(customCaliperInput.value)
+        : Number(fluteSelect.value);
   dimensions.boxType = boxTypeSelect.value;
   dimensions.paperType = paperTypeSelect?.value || "corrugated";
   return dimensions;
@@ -169,14 +201,19 @@ for (const button of faceButtons) {
 syncFaceUI();
 
 fluteSelect.addEventListener("change", () => {
-  customCaliperRow.hidden = fluteSelect.value !== "custom";
+  if (paperTypeSelect?.value === "white-card") whiteCardCaliperValue = fluteSelect.value;
+  else corrugatedFluteValue = fluteSelect.value;
+  syncMaterialControls();
   update();
 });
 customCaliperInput.addEventListener("input", update);
 dimRatioSelect.addEventListener("change", update);
 sideSumLimitInput.addEventListener("input", update);
 boxTypeSelect.addEventListener("change", update);
-paperTypeSelect?.addEventListener("change", update);
+paperTypeSelect?.addEventListener("change", () => {
+  syncMaterialControls();
+  update();
+});
 
 filenameInput.addEventListener("input", () => {
   userEditedFilename = true;
@@ -216,4 +253,5 @@ downloadPdfButton.addEventListener("click", () => {
   );
 });
 
+syncMaterialControls();
 update();

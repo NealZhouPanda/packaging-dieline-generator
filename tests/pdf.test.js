@@ -81,11 +81,11 @@ describe("PDF 图纸导出", () => {
       length: 300,
       width: 200,
       depth: 100,
-      caliper: 3,
+      caliper: 0.5,
       paperType: "white-card",
     });
     const whiteCardPdf = decoder.decode(geometryToPdf(whiteCard, { date: "2026-08-13" }));
-    const subject = "0421 L300 W200 D100 CAL3 PAPER white-card";
+    const subject = "0421 L300 W200 D100 CAL0.5 PAPER white-card";
     const subjectHex = `<FEFF${[...subject]
       .map((char) => char.codePointAt(0).toString(16).toUpperCase().padStart(4, "0"))
       .join("")}>`;
