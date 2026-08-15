@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generate0202A } from "../src/generator0202a.js";
-import { blanksPerSheet, dieSize, netArea, outerSize, sideHeights, sideSumCm, volumetricWeightKg } from "../src/netarea.js";
+import { blanksPerSheet, dieSize, dielineSize, netArea, outerSize, outerSizeFromDieline, sideHeights, sideSumCm, volumetricWeightKg } from "../src/netarea.js";
 
 describe("净面积", () => {
   it("默认尺寸：轮廓闭合，净面积稳定（结构差异在 1% 以内）", () => {
@@ -22,11 +22,21 @@ describe("净面积", () => {
 
 describe("刀模尺寸", () => {
   const p = { length: 390, width: 130, depth: 640, caliper: 5 };
-  it("刀模 = 内 + 半个纸厚", () => {
+  it("输入刀模尺寸时，导出尺寸保持输入值", () => {
+    expect(dielineSize(p)).toEqual({ length: 390, width: 130, depth: 640 });
+  });
+  it("保留历史 dieSize 换算函数的兼容性", () => {
     expect(dieSize(p)).toEqual({ length: 392.5, width: 132.5, depth: 642.5 });
   });
-  it("开箱面外尺寸 = 内 + 2 倍纸厚；高 = 内 + 1 倍纸厚", () => {
+  it("默认盒型按刀模尺寸估算外尺寸", () => {
     expect(outerSize(p)).toEqual({ length: 400, width: 140, depth: 645 });
+  });
+  it("E005C 使用项目现有的刀模到外尺寸抛重换算", () => {
+    expect(outerSizeFromDieline({ ...p, boxType: "E005C" })).toEqual({
+      length: 393.3333333333333,
+      width: 138.33333333333334,
+      depth: 643.3333333333334,
+    });
   });
   it("四侧面高度分高低两组，差距 2 个纸厚", () => {
     expect(sideHeights(p)).toEqual({ high: 647.5, low: 637.5 });

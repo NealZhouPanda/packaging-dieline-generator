@@ -1,6 +1,6 @@
 import { PDF_FONT } from "./font-subset.js";
 import { PDF_FONT_WIDTHS } from "./font-widths.js";
-import { dieSize, sideSumCm, volumetricWeightKg } from "./netarea.js";
+import { dielineSize, sideSumCm, volumetricWeightKg } from "./netarea.js";
 import { dedupeFoldLines, pointBounds } from "./svg.js";
 
 const MM_TO_PT = 72 / 25.4;
@@ -199,7 +199,7 @@ function hairline(yFromTopMm, pageHeightMm, lay) {
 
 function sidebarText({ filename, date, parameters, overLimit, ratio, sideSum, pageHeightMm, lay }) {
   const { caliper } = parameters;
-  const die = dieSize(parameters);
+  const die = dielineSize(parameters);
   const contentW = lay.sidebar - lay.left * 2;
   const nameLines = wrapByWidth(stripExportExt(filename), lay.titlePt, contentW);
   const noteLines = wrapByWidth("首次投产前先打样核对", lay.valuePt, contentW);

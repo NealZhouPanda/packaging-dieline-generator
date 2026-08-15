@@ -102,9 +102,8 @@ export function netArea(elements) {
 }
 
 /**
- * 0202A 专用换算（换箱型不能套用）。
- * 刀模 = 内 + T/2；开箱面（L×W）外尺寸 = 内 + 2T（两次折叠）；
- * 高 D 外 = 内 + T；四侧面高度分高低两组，差距 2T。
+ * 输入值和导出几何统一按刀模尺寸处理。
+ * 这个旧函数保留给历史调用，不参与当前 PDF 或抛重计算。
  */
 export function dieSize({ length, width, depth, caliper }) {
   const half = caliper / 2;
@@ -115,13 +114,30 @@ export function dieSize({ length, width, depth, caliper }) {
   };
 }
 
-/** 外尺寸：开箱面 L/W 加 2 倍纸厚，高 D 加 1 倍纸厚。 */
-export function outerSize({ length, width, depth, caliper }) {
+/** 返回导出文件使用的刀模尺寸，不做任何内外尺寸换算。 */
+export function dielineSize({ length, width, depth }) {
+  return { length, width, depth };
+}
+
+/**
+ * 从刀模尺寸估算箱体外尺寸。
+ * 该换算只用于抛重和三边和，不能回写到刀模几何或导出文件。
+ */
+export function outerSizeFromDieline({ length, width, depth, caliper, boxType }) {
+  const isE005C = boxType === "E005C" || boxType === "0427";
+  const lengthOffset = isE005C ? (2 * caliper) / 3 : 2 * caliper;
+  const widthOffset = isE005C ? (5 * caliper) / 3 : 2 * caliper;
+  const depthOffset = isE005C ? (2 * caliper) / 3 : caliper;
   return {
-    length: length + 2 * caliper,
-    width: width + 2 * caliper,
-    depth: depth + caliper,
+    length: length + lengthOffset,
+    width: width + widthOffset,
+    depth: depth + depthOffset,
   };
+}
+
+/** 兼容历史调用名；当前语义是“由刀模尺寸估算外尺寸”。 */
+export function outerSize(parameters) {
+  return outerSizeFromDieline(parameters);
 }
 
 /** 四侧面高度：高位 / 低位，差距 2×纸厚。 */
@@ -132,14 +148,14 @@ export function sideHeights({ depth, caliper }) {
 
 /** 抛重按外尺寸估算，单位 kg。 */
 export function volumetricWeightKg(parameters, ratio) {
-  const outer = outerSize(parameters);
+  const outer = outerSizeFromDieline(parameters);
   const cm = [outer.length, outer.width, outer.depth].map((mm) => mm / 10);
   return (cm[0] * cm[1] * cm[2]) / ratio;
 }
 
 /** 三边和按外尺寸，单位 cm。 */
 export function sideSumCm(parameters) {
-  const outer = outerSize(parameters);
+  const outer = outerSizeFromDieline(parameters);
   return (outer.length + outer.width + outer.depth) / 10;
 }
 export function blanksPerSheet(blankWidth, blankHeight, maxW, maxL) {
