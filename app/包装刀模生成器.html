@@ -28,7 +28,7 @@ ${H}
 endstream`,"<< /Type /Font /Subtype /Type0 /BaseFont /AAAAAA+NotoSansSC /Encoding /Identity-H /DescendantFonts [6 0 R] /ToUnicode 9 0 R >>",`<< /Type /Font /Subtype /CIDFontType2 /BaseFont /AAAAAA+NotoSansSC /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor 7 0 R /DW 1000 /W ${wB()} /CIDToGIDMap /Identity >>`,"<< /Type /FontDescriptor /FontName /AAAAAA+NotoSansSC /Flags 4 /FontBBox [-100 -300 1100 1000] /ItalicAngle 0 /Ascent 880 /Descent -120 /CapHeight 700 /StemV 80 /FontFile2 8 0 R >>","<< /Length 0 >>",`<< /Length ${N} >>
 stream
 ${x}
-endstream`],PA=`<< /Title ${CA(gB)} /Subject ${CA(`${B.meta.boxId} L${Q.length} W${Q.width} D${Q.depth} CAL${Q.caliper}`)} >>`,VA=new TextEncoder,l=[];let L=0;const k=j=>{const O=VA.encode(j);l.push(O),L+=O.length};k(`%PDF-1.4
+endstream`],PA=`<< /Title ${CA(gB)} /Subject ${CA(`${Q.boxType||B.meta.boxId||"0202A"} L${Q.length} W${Q.width} D${Q.depth} CAL${Q.caliper} PAPER ${Q.paperType||"corrugated"}`)} >>`,VA=new TextEncoder,l=[];let L=0;const k=j=>{const O=VA.encode(j);l.push(O),L+=O.length};k(`%PDF-1.4
 %
 `);const _=[];y.forEach((j,O)=>{if(_.push(L),O===7){const f=S.length;k(`${O+1} 0 obj
 << /Length ${f} /Length1 ${f} >>
@@ -141,8 +141,8 @@ function UA_K016A({ length, width, depth, caliper }) {
   };
 }
 
-const BOX_GENERATORS=Object.freeze({"0201":UA_0201,"0202A":UA0202A,"0421":UA_0421,"K016A":UA_K016A,E005C:UA_E005C,C001GX:UA_C001GX});UA=function(B){const A=B.boxType||"0202A",E=BOX_GENERATORS[A];if(!E)throw new RangeError(`Unknown box type: ${A}`);return E(B)};const G={length:document.querySelector("#length"),width:document.querySelector("#width"),depth:document.querySelector("#depth")},d=Object.freeze({width:1200,length:2400}),cA=document.querySelector("#materialWarning"),r=document.querySelector("#dimRatio"),q=document.querySelector("#sideSumLimit"),W=document.querySelector("#flute"),hB=document.querySelector("#customCaliperRow"),GA=document.querySelector("#caliper"),jB=document.querySelector("#c001gxTongueStyleRow"),kB=document.querySelector("#c001gxTongueStyle"),FA=document.querySelector("#preview"),e=document.querySelector("#error"),v=document.querySelector("#download"),u=document.querySelector("#downloadPdf"),m=document.querySelector("#filename");let $=null,DA="",jA=!1;function SB(){const B=Object.fromEntries(Object.entries(G).map(([A,E])=>[A,Number(E.value)]));return B.caliper=W.value==="custom"?Number(GA.value):Number(W.value),B.boxType=document.querySelector("#boxType").value||"0202A",B.c001gxTongueStyle=Number(kB?.value||2),jB&&(jB.hidden=B.boxType!=="C001GX"),B}function HB(B){return`${B.boxType||"0202A"}_L${B.length}_W${B.width}_D${B.depth}_C${B.caliper}${B.boxType==="C001GX"?`_S${B.c001gxTongueStyle||2}`:""}`}function NB(B,A){const{width:E,length:g}=d,I=B<=E&&A<=g||B<=g&&A<=E;cA.hidden=I,cA.textContent=I?"":`刀模展开 ${B}×${A}mm，超过材料幅面 ${E}×${g}mm：一张纸印不下，需与供应商确认分张或拼接方案。`}function zB(B){for(const A of document.querySelectorAll("[data-face-data]")){const E=A.dataset.faceData;try{const g=HA(B,E),I=UA({...g,caliper:B.caliper,boxType:B.boxType,c001gxTongueStyle:B.c001gxTongueStyle}),Q=bA(I.elements),M=qA(I.meta.width,I.meta.height,d.width,d.length);A.textContent=M>0?`${(Q/1e6).toFixed(3)}m²
-${M}个/张`:"超幅面"}catch{A.textContent="超范围"}}}function V(){try{const B=UA(SB());$=B,DA=zA(B),jA||(m.value=HB(B.parameters)),FA.innerHTML=DA.replace(/^<\?xml[^>]+>\s*/,""),document.querySelector("#sheetWidth").textContent=`${B.meta.width} mm`,document.querySelector("#sheetHeight").textContent=`${B.meta.height} mm`;const A=Number(r.value),E=SA(B.parameters),g=Number(q.value),I=Number.isFinite(g)&&g>0&&E>g;document.querySelector("#volWeightResult").hidden=!I,I&&(document.querySelector("#volWeightNote").textContent=`已超抛（三边和 ${E.toFixed(0)}cm > ${g}cm），抛重为：`,document.querySelector("#volWeight").textContent=`${hA(B.parameters,A).toFixed(1)} kg`),NB(B.meta.width,B.meta.height),zB(B.parameters),e.hidden=!0,v.disabled=!1,u.disabled=!1}catch(B){e.textContent=B instanceof Error?B.message:"请输入有效的尺寸。",e.hidden=!1,v.disabled=!0,u.disabled=!0,FA.replaceChildren()}}for(const B of Object.values(G))B.addEventListener("input",V);document.querySelector("#boxType").addEventListener("change",()=>{jA=!1,V()});kB?.addEventListener("change",()=>{jA=!1,V()});const TA=[...document.querySelectorAll(".face-option")];let t=$A({length:Number(G.length.value),width:Number(G.width.value),depth:Number(G.depth.value)});function kA(){for(const B of TA){const A=B.dataset.face===t;B.classList.toggle("active",A),B.setAttribute("aria-checked",String(A))}}for(const B of TA)B.addEventListener("click",()=>{t=B.dataset.face;const A=HA({length:Number(G.length.value),width:Number(G.width.value),depth:Number(G.depth.value)},t);G.length.value=A.length,G.width.value=A.width,G.depth.value=A.depth,kA(),V()});kA();W.addEventListener("change",()=>{hB.hidden=W.value!=="custom",V()});GA.addEventListener("input",V);r.addEventListener("change",V);q.addEventListener("input",V);m.addEventListener("input",()=>{jA=!0});function yA(B,A,E){const g=URL.createObjectURL(new Blob([A],{type:E})),I=document.createElement("a");I.href=g,I.download=B,I.click(),URL.revokeObjectURL(g)}function iA(B){return QB(m.value,B)}v.addEventListener("click",()=>{yA(iA("svg"),zA($,{withNote:!0}),"image/svg+xml;charset=utf-8")});u.addEventListener("click",()=>{yA(iA("pdf"),UB($,{filename:b(m.value),ratio:Number(r.value),sideLimit:Number(q.value)}),"application/pdf")});V();
+const BOX_GENERATORS=Object.freeze({"0201":UA_0201,"0202A":UA0202A,"0421":UA_0421,"K016A":UA_K016A,E005C:UA_E005C,C001GX:UA_C001GX});UA=function(B){const A=B.boxType||"0202A",E=BOX_GENERATORS[A];if(!E)throw new RangeError(`Unknown box type: ${A}`);return E(B)};const G={length:document.querySelector("#length"),width:document.querySelector("#width"),depth:document.querySelector("#depth")},d=Object.freeze({width:1200,length:2400}),cA=document.querySelector("#materialWarning"),r=document.querySelector("#dimRatio"),q=document.querySelector("#sideSumLimit"),W=document.querySelector("#flute"),hB=document.querySelector("#customCaliperRow"),GA=document.querySelector("#caliper"),jB=document.querySelector("#c001gxTongueStyleRow"),kB=document.querySelector("#c001gxTongueStyle"),FA=document.querySelector("#preview"),e=document.querySelector("#error"),v=document.querySelector("#download"),u=document.querySelector("#downloadPdf"),m=document.querySelector("#filename");let $=null,DA="",jA=!1;function SB(){const B=Object.fromEntries(Object.entries(G).map(([A,E])=>[A,Number(E.value)]));return B.caliper=W.value==="custom"?Number(GA.value):Number(W.value),B.boxType=document.querySelector("#boxType").value||"0202A",B.paperType=document.querySelector("#paperType")?.value||"corrugated",B.c001gxTongueStyle=Number(kB?.value||2),jB&&(jB.hidden=B.boxType!=="C001GX"),B}function HB(B){return`${B.boxType||"0202A"}_L${B.length}_W${B.width}_D${B.depth}_C${B.caliper}${B.boxType==="C001GX"?`_S${B.c001gxTongueStyle||2}`:""}`}function NB(B,A){const{width:E,length:g}=d,I=B<=E&&A<=g||B<=g&&A<=E;cA.hidden=I,cA.textContent=I?"":`刀模展开 ${B}×${A}mm，超过材料幅面 ${E}×${g}mm：一张纸印不下，需与供应商确认分张或拼接方案。`}function zB(B){for(const A of document.querySelectorAll("[data-face-data]")){const E=A.dataset.faceData;try{const g=HA(B,E),I=UA({...g,caliper:B.caliper,boxType:B.boxType,c001gxTongueStyle:B.c001gxTongueStyle}),Q=bA(I.elements),M=qA(I.meta.width,I.meta.height,d.width,d.length);A.textContent=M>0?`${(Q/1e6).toFixed(3)}m²
+${M}个/张`:"超幅面"}catch{A.textContent="超范围"}}}function V(){try{const B=UA(SB());const Z=a(B.elements);B.meta.width=Y(Z.maxX-Z.minX);B.meta.height=Y(Z.maxY-Z.minY);B.meta.area=Y(B.meta.width*B.meta.height);$=B,DA=zA(B),jA||(m.value=HB(B.parameters)),FA.innerHTML=DA.replace(/^<\?xml[^>]+>\s*/,""),document.querySelector("#sheetWidth").textContent=`${B.meta.width} mm`,document.querySelector("#sheetHeight").textContent=`${B.meta.height} mm`;const A=Number(r.value),E=SA(B.parameters),g=Number(q.value),I=Number.isFinite(g)&&g>0&&E>g;document.querySelector("#volWeightResult").hidden=!I,I&&(document.querySelector("#volWeightNote").textContent=`已超抛（三边和 ${E.toFixed(0)}cm > ${g}cm），抛重为：`,document.querySelector("#volWeight").textContent=`${hA(B.parameters,A).toFixed(1)} kg`),NB(B.meta.width,B.meta.height),zB(B.parameters),e.hidden=!0,v.disabled=!1,u.disabled=!1}catch(B){e.textContent=B instanceof Error?B.message:"请输入有效的尺寸。",e.hidden=!1,v.disabled=!0,u.disabled=!0,FA.replaceChildren()}}for(const B of Object.values(G))B.addEventListener("input",V);document.querySelector("#boxType").addEventListener("change",()=>{jA=!1,V()});kB?.addEventListener("change",()=>{jA=!1,V()});document.querySelector("#paperType")?.addEventListener("change",V);const TA=[...document.querySelectorAll(".face-option")];let t=$A({length:Number(G.length.value),width:Number(G.width.value),depth:Number(G.depth.value)});function kA(){for(const B of TA){const A=B.dataset.face===t;B.classList.toggle("active",A),B.setAttribute("aria-checked",String(A))}}for(const B of TA)B.addEventListener("click",()=>{t=B.dataset.face;const A=HA({length:Number(G.length.value),width:Number(G.width.value),depth:Number(G.depth.value)},t);G.length.value=A.length,G.width.value=A.width,G.depth.value=A.depth,kA(),V()});kA();W.addEventListener("change",()=>{hB.hidden=W.value!=="custom",V()});GA.addEventListener("input",V);r.addEventListener("change",V);q.addEventListener("input",V);m.addEventListener("input",()=>{jA=!0});function yA(B,A,E){const g=URL.createObjectURL(new Blob([A],{type:E})),I=document.createElement("a");I.href=g,I.download=B,I.click(),URL.revokeObjectURL(g)}function iA(B){return QB(m.value,B)}v.addEventListener("click",()=>{yA(iA("svg"),zA($,{withNote:!0}),"image/svg+xml;charset=utf-8")});u.addEventListener("click",()=>{yA(iA("pdf"),UB($,{filename:b(m.value),ratio:Number(r.value),sideLimit:Number(q.value)}),"application/pdf")});V();
 </script>
     <style>:root{color-scheme:light;font-family:PingFang SC,Microsoft YaHei,sans-serif;--ink: #17202a;--muted: #68717c;--line: #dfe3e7;--panel: #ffffff;--canvas: #f2f3f4;--accent: #146d5b;--accent-dark: #0f5547;--cut: #005cff;--fold: #ef3f3f}*{box-sizing:border-box}body{margin:0;background:#e9ebed;color:var(--ink);height:100dvh;overflow:hidden}button,input,select{font:inherit}button,select{cursor:pointer}.workspace{height:100dvh;display:flex;flex-direction:column}.topbar{height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;background:#1c252e;color:#fff;border-bottom:1px solid #303b45}.eyebrow{margin:0 0 3px;color:#aeb8c1;font-size:11px;letter-spacing:.08em}h1{margin:0;font-size:19px;line-height:1;font-weight:650;letter-spacing:.02em}.status{display:flex;align-items:center;gap:9px;color:#d8e7e2;font-size:13px}.status span{width:8px;height:8px;background:#55c89f;border-radius:50%;box-shadow:0 0 0 4px #55c89f1f}.layout{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr)}.controls{padding:14px 18px;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;min-height:0}.section-heading{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}.section-heading.compact{margin-top:16px}.section-heading>span{display:grid;place-items:center;width:24px;height:24px;border:1px solid #bfc7cd;border-radius:4px;color:var(--accent);font:600 10px ui-monospace,monospace}.section-heading h2{margin:0 0 2px;font-size:14px}.section-heading p{margin:0;color:var(--muted);font-size:11px}.field{display:grid;gap:5px}.field[hidden]{display:none}.field>span{color:#4e5963;font-size:11px;font-weight:600}input,select{width:100%;height:36px;border:1px solid #cfd5da;border-radius:4px;padding:0 10px;background:#fff;color:var(--ink);outline:none}input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px #146d5b1a}.dimension-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.face-selector{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.face-option{display:grid;justify-items:center;gap:3px;padding:7px 4px 6px;background:#fafbfc;border:1.5px solid #d8dde1;border-radius:6px;color:#4e5963}.face-option svg{width:48px;height:36px}.face-option polygon{fill:#eef1f3;stroke:#7d8892;stroke-width:1.4;stroke-linejoin:round}.face-option .lid{fill:#e2e8ec}.face-option .flap-line{stroke:#7d8892;stroke-width:1.2}.face-option span{font-size:12px;font-weight:600}.face-option .face-data{font-size:10px;font-weight:500;color:#8a939c;font-variant-numeric:tabular-nums;line-height:1.4;text-align:center;white-space:pre-line}.face-option.active .face-data{color:var(--accent-dark)}.face-option:hover{border-color:#93a29e}.face-option.active{border-color:var(--accent);background:#eef5f2;color:var(--accent-dark)}.face-option.active polygon{stroke:var(--accent);fill:#dcebe5}.face-option.active .lid{fill:#cbe3da}.face-option.active .flap-line{stroke:var(--accent)}.error{margin:8px 0;padding:8px 10px;background:#fff0f0;border:1px solid #ffcaca;color:#a92727;font-size:12px}.material-warning{margin:8px 0;padding:8px 10px;background:#fff8e6;border:1px solid #ecd27a;color:#7a5b00;font-size:12px;line-height:1.5}.courier-params{display:flex;gap:8px;margin-top:8px;align-items:end}.courier-params label{display:grid;gap:4px;flex:1;color:#4e5963;font-size:10px;font-weight:600}.courier-params select,.courier-params input{height:30px;padding:0 8px;font-size:12px}.courier-params+.vol-weight-result{margin-top:8px}.vol-weight-result{display:flex;align-items:baseline;gap:8px;padding:8px 12px;background:#f4f7f6;border:1px solid #dfe7e4;border-radius:4px}.vol-weight-result[hidden]{display:none}.vol-weight-result strong{font-size:18px;font-weight:650;color:var(--accent-dark);font-variant-numeric:tabular-nums}.vol-weight-result span{color:var(--muted);font-size:11px}.vol-weight-result+.material-warning,.courier-params+.material-warning{margin-top:8px}.summary{display:grid;grid-template-columns:1fr 1fr;margin-top:12px;border:1px solid var(--line);border-radius:4px}.summary div{padding:8px 10px;border-right:1px solid var(--line)}.summary div:last-child{border-right:0}.summary span,.summary strong{display:block}.summary span{margin-bottom:3px;color:var(--muted);font-size:10px}.summary strong{font-size:12px;font-variant-numeric:tabular-nums}.download-dock{position:sticky;bottom:0;margin:12px -18px -14px;padding:10px 18px 12px;background:var(--panel);border-top:1px solid var(--line)}.download-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.primary{width:100%;min-height:42px;border:0;border-radius:4px;background:var(--accent);color:#fff;font-weight:650}.primary.secondary{background:#33414d}.primary.secondary:hover{background:#26313b}.primary:hover{background:var(--accent-dark)}.primary:disabled{opacity:.45;cursor:not-allowed}.fineprint{margin:7px 2px 0;color:var(--muted);font-size:10px;line-height:1.5}.preview-panel{min-width:0;min-height:0;display:grid;grid-template-rows:64px minmax(0,1fr) auto;background:var(--canvas)}.preview-toolbar{display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:#fafafa;border-bottom:1px solid var(--line)}.preview-toolbar strong,.file-label{display:block}.file-label{margin-bottom:4px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}.file-name-input{width:min(480px,50vw);height:26px;border:1px solid #cfd5da;border-radius:4px;padding:0 8px;font:500 12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);background:#fff}.file-name-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px #146d5b1f}.legend{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px}.cut-key,.fold-key{width:24px;height:0;border-top:2px solid var(--cut)}.fold-key{margin-left:10px;border-color:var(--fold);border-top-style:dashed}.preview{margin:16px 22px;min-height:0;display:grid;place-items:center;overflow:hidden;background-color:#fff;background-image:radial-gradient(#e3e6e8 1px,transparent 1px);background-size:24px 24px;border:1px solid #d8dcdf;box-shadow:0 8px 30px #19222b14}.preview svg{width:calc(100% - 48px);height:calc(100% - 48px);max-width:100%;max-height:100%}.preview svg .cut{stroke-width:1.4px}.preview svg .fold{stroke-width:1.4px;stroke-dasharray:7 4}.calibration-note{margin:0 22px 16px;padding:10px 14px;display:flex;gap:14px;align-items:baseline;background:#fffdf4;border:1px solid #e7dfb6;color:#655c31;font-size:11px;line-height:1.5}.calibration-note strong{white-space:nowrap}@media(max-width:900px){.layout{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);overflow-y:auto}.controls{border-right:0;border-bottom:1px solid var(--line);overflow-y:visible}.preview-panel{min-height:70dvh}}
 </style>
@@ -304,5 +304,176 @@ ${M}个/张`:"超幅面"}catch{A.textContent="超范围"}}}function V(){try{cons
         </section>
       </section>
     </main>
-  </body>
+  <script data-bilingual-overlay>(() => {
+  const exact = new Map([
+    ["内部工具 · 尺寸仅在本机计算", "Offline tool · dimensions stay on this device"],
+    ["包装刀模生成器", "Packaging Dieline Generator"],
+    ["离线可计算", "Offline"],
+    ["运行状态", "Runtime status"],
+    ["刀模参数", "Dieline parameters"],
+    ["选择箱型", "Select box type"],
+    ["当前开放 0201、E005C 与 C001GX 三款结构", "Three box styles available: 0201, E005C, C001GX"],
+    ["开口面 = 摇盖所在面，点击切换数据位置；面积按刀模展开包络估算", "Opening face = the flap side; click to switch data. Area uses the blank-envelope estimate"],
+    ["箱型", "Box type"],
+    ["0201 · 标准纸箱", "0201 · Standard carton"],
+
+    ["E005C · 翻盖飞机盒（0427）", "E005C · Flip-top mailer (0427)"],
+    ["C001GX · 锁底自扣盒", "C001GX · Lock-bottom carton"],
+    ["输入刀模尺寸", "Enter dieline dimensions"],
+    ["单位：毫米 mm", "Unit: mm"],
+    ["纸型", "Material"],
+    ["瓦楞纸板", "Corrugated board"],
+    ["白卡纸", "White folding boxboard"],
+    ["瓦楞楞型", "Flute"],
+    ["白卡纸厚度（mm）", "White board caliper (mm)"],
+    ["自定义纸厚…", "Custom caliper…"],
+    ["自定义纸厚（1.5–5.0 mm）", "Custom caliper (1.5–5.0 mm)"],
+    ["C001GX 插舌样式", "C001GX tongue style"],
+    ["插卡式", "Card-lock style"],
+    ["插入式", "Insert style"],
+    ["开口方向", "Opening face"],
+    ["开口面 = 摇盖所在面，点击切换数据位置", "Opening face = flap side; click to switch dimensions"],
+    ["每张数量表示单位原纸张可切出的包装盒数量，可用于用纸和成本估算。", "Boxes per raw sheet; for material and cost estimates."],
+    ["大面", "Large face"],
+    ["中面", "Medium face"],
+    ["小面", "Small face"],
+    ["抛重估算", "Volumetric weight"],
+    ["体积重量 = 外尺寸乘积 ÷ 抛比（外尺寸由当前刀模尺寸换算估算）", "Volumetric weight = outer dimensions product ÷ ratio (estimated from current dieline dimensions)"],
+    ["三边和限制 cm", "Side-sum limit (cm)"],
+    ["抛比", "Dimensional ratio"],
+    ["已超抛，抛重为：", "Over limit, volumetric weight:"],
+    ["展开宽", "Blank width"],
+    ["展开高", "Blank height"],
+    ["下载 SVG", "Download SVG"],
+    ["下载 PDF", "Download PDF"],
+    ["刀模预览", "Dieline preview"],
+    ["二维刀模图", "2D dieline"],
+    ["刀模文件名（可改，下载时自动加 .svg / .pdf）", "Dieline filename (editable; .svg / .pdf added on download)"],
+    ["刀线", "Cut line"],
+    ["压痕线", "Crease line"],
+    ["注意", "Note"],
+    ["首次投产前先打样核对。", "Make a sample and verify before first production."],
+    ["注意：首次投产前先打样核对。", "Note: make a sample and verify before first production."],
+    ["超范围", "Out of range"],
+    ["超幅面", "Exceeds sheet"],
+    ["未超抛", "Within limit"],
+    ["文件名", "Filename"],
+    ["日期", "Date"],
+    ["纸厚", "Caliper"],
+    ["过抛", "Volumetric limit"],
+    ["刀模尺寸", "Dieline size"],
+  ]);
+
+  const originals = new WeakMap();
+  let language = "zh";
+  try {
+    language = localStorage.getItem("packaging-dieline-language") || "zh";
+  } catch {}
+
+  function translate(value) {
+    const leading = value.match(/^\s*/)?.[0] || "";
+    const trailing = value.match(/\s*$/)?.[0] || "";
+    const text = value.trim();
+    if (!text) return value;
+    if (exact.has(text)) return leading + exact.get(text) + trailing;
+    let m = text.match(/^长 L（(.+)）$/);
+    if (m) return `${leading}Length L (${m[1]})${trailing}`;
+    m = text.match(/^宽 W（(.+)）$/);
+    if (m) return `${leading}Width W (${m[1]})${trailing}`;
+    m = text.match(/^高 D（(.+)）$/);
+    if (m) return `${leading}Height D (${m[1]})${trailing}`;
+    m = text.match(/^([A-Z] 楞) (\d+(?:\.\d+)?)$/);
+    if (m) return `${leading}${m[1].replace("楞", " flute")} ${m[2]}${trailing}`;
+    m = text.match(/^已超抛（三边和 (.+)cm > (.+)cm），抛重为：$/);
+    if (m) return `${leading}Over limit (side sum ${m[1]} cm > ${m[2]} cm), volumetric weight:${trailing}`;
+    m = text.match(/^三边和 (.+) cm$/);
+    if (m) return `${leading}Side sum ${m[1]} cm${trailing}`;
+    m = text.match(/^刀模展开(.+)×(.+)mm，超过材料幅面 (.+)×(.+)mm：一张纸印不下，需与供应商确认分张或拼接方案。$/);
+    if (m) return `${leading}Dieline ${m[1]} × ${m[2]} mm exceeds the ${m[3]} × ${m[4]} mm sheet: confirm splitting or splicing with the supplier.${trailing}`;
+    m = text.match(/^宽 W 必须比长 L 小 2mm 以上：(.+)$/);
+    if (m) return `${leading}Width W must be at least 2 mm smaller than length L: ${m[1]}${trailing}`;
+    m = text.match(/^(.+)超出已验证范围（(.+)–(.+) mm），该尺寸尚未校准，不能生成刀模$/);
+    if (m) return `${leading}${m[1]} is outside the verified range (${m[2]}–${m[3]} mm); this size is not calibrated and cannot generate a dieline${trailing}`;
+    m = text.match(/^刀线轮廓未闭合：(.+) 段未能串联$/);
+    if (m) return `${leading}Dieline contour is not closed: ${m[1]} segments could not be joined${trailing}`;
+    m = text.match(/^(.+m²)\n([0-9.]+)个\/张$/);
+    if (m) return `${leading}${m[1]}\n${m[2]} / sheet${trailing}`;
+    m = text.match(/^([0-9.]+)个\/张$/);
+    if (m) return `${leading}${m[1]} / sheet${trailing}`;
+    m = text.match(/^抛重 (.+) kg$/);
+    if (m) return `${leading}Volumetric weight ${m[1]} kg${trailing}`;
+    if (text === "请输入有效的尺寸。") return `${leading}Enter valid dimensions.${trailing}`;
+    if (text === "刀线轮廓首尾不相接") return `${leading}Dieline contour is not closed${trailing}`;
+    if (text === "canvas does not contain geometry：声明画布无法容纳全部刀模坐标，已拒绝导出") {
+      return `${leading}Canvas does not contain the geometry; export refused.${trailing}`;
+    }
+    return value;
+  }
+
+  function visit(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    for (const node of nodes) {
+      if (!originals.has(node)) originals.set(node, node.nodeValue);
+      const original = originals.get(node);
+      const next = language === "en" ? translate(original) : original;
+      if (node.nodeValue !== next) node.nodeValue = next;
+    }
+  }
+
+  function translateAttributes() {
+    for (const element of document.querySelectorAll("[aria-label]")) {
+      if (!element.dataset.zhAria) element.dataset.zhAria = element.getAttribute("aria-label");
+      const original = element.dataset.zhAria;
+      element.setAttribute("aria-label", language === "en" ? translate(original) : original);
+    }
+  }
+
+  function apply() {
+    document.documentElement.lang = language === "en" ? "en" : "zh-CN";
+    document.title = language === "en" ? "Packaging Dieline Generator" : "包装刀模生成器";
+    visit(document.body);
+    translateAttributes();
+    toggle.textContent = language === "en" ? "中文" : "EN";
+    toggle.setAttribute("aria-label", language === "en" ? "Switch to Chinese" : "切换到英文");
+    toggle.title = toggle.getAttribute("aria-label");
+    try { localStorage.setItem("packaging-dieline-language", language); } catch {}
+  }
+
+  const style = document.createElement("style");
+  style.textContent = `
+    .language-toggle { margin-left: 12px; border: 1px solid #cbd2d9; border-radius: 6px; background: transparent; color: inherit; padding: 5px 9px; font: inherit; font-size: 12px; cursor: pointer; }
+    .language-toggle:hover { background: rgba(255,255,255,.12); }
+  `;
+  document.head.appendChild(style);
+
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "language-toggle";
+  toggle.addEventListener("click", () => {
+    language = language === "en" ? "zh" : "en";
+    apply();
+  });
+  document.querySelector(".topbar")?.appendChild(toggle);
+
+  const observer = new MutationObserver((records) => {
+    for (const record of records) {
+      if (record.type === "characterData") {
+        if (!originals.has(record.target)) originals.set(record.target, record.target.nodeValue);
+        const original = originals.get(record.target);
+        const next = language === "en" ? translate(original) : original;
+        if (record.target.nodeValue !== next) record.target.nodeValue = next;
+      } else {
+        for (const node of record.addedNodes) {
+          if (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE) visit(node);
+        }
+      }
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+  apply();
+})();
+</script>
+</body>
 </html>

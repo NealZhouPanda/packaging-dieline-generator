@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generate0421 } from "../src/generator0421.js";
+import { geometryToSvg } from "../src/svg.js";
 
 describe("0421 flip-top display box", () => {
   it("matches the supplied Packmage reference geometry", () => {
@@ -21,6 +22,14 @@ describe("0421 flip-top display box", () => {
     expect(geometry.meta.width).toBe(1273.98);
     expect(geometry.meta.height).toBe(1064);
     expect(geometry.parameters.slotCount).toBe(2);
+  });
+
+  it("keeps the exported canvas aligned with the boundary geometry", () => {
+    const geometry = generate0421({ length: 600, width: 400, depth: 50, caliper: 1.5 });
+
+    expect(geometry.meta.width).toBe(997);
+    expect(geometry.meta.height).toBe(947);
+    expect(() => geometryToSvg(geometry)).not.toThrow();
   });
 
   it("rejects dimensions outside the current verified envelope", () => {

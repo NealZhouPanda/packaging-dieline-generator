@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generateK016A } from "../src/generatorK016A.js";
+import { geometryToSvg } from "../src/svg.js";
 
 describe("K016A 提手盒", () => {
   it("matches the Packmage reference at the captured base dimensions", () => {
@@ -39,6 +40,17 @@ describe("K016A 提手盒", () => {
       solidLength: 3186,
       foldLength: 1821.7,
     });
+  });
+
+  it.each([
+    [200, 120, 50, 1, 654, 239.67],
+    [440, 400, 230, 5, 1702, 730.33],
+  ])("keeps the exported canvas aligned at boundary size %s x %s x %s x %s", (length, width, depth, caliper, expectedWidth, expectedHeight) => {
+    const geometry = generateK016A({ length, width, depth, caliper });
+
+    expect(geometry.meta.width).toBe(expectedWidth);
+    expect(geometry.meta.height).toBe(expectedHeight);
+    expect(() => geometryToSvg(geometry)).not.toThrow();
   });
 
   it("rejects dimensions outside the verified operating range", () => {

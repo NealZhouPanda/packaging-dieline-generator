@@ -57,7 +57,7 @@ function pickSet(length, width, depth, caliper) {
   }, { score: Number.POSITIVE_INFINITY, candidate: K016A_DATA.sets[0] }).candidate;
 }
 
-function UA_K016A({ length, width, depth, caliper }) {
+function UA_K016A({ length, width, depth, caliper, paperType = "corrugated" }) {
   validate("length", length);
   validate("width", width);
   validate("depth", depth);
@@ -79,9 +79,12 @@ function UA_K016A({ length, width, depth, caliper }) {
     solidLength: metaValue(set, "SolidLength", length, width, depth, caliper),
     foldLength: metaValue(set, "DashLength", length, width, depth, caliper),
   };
+  const bounds = pointBounds(elements);
+  meta.width = round(bounds.maxX - bounds.minX);
+  meta.height = round(bounds.maxY - bounds.minY);
   meta.area = round(meta.width * meta.height);
   return {
-    parameters: { boxType: K016A_BOX_ID, length, width, depth, caliper },
+    parameters: { boxType: K016A_BOX_ID, length, width, depth, caliper, paperType },
     elements,
     meta,
     compensation: { sty1: 1, of: caliper, f: width / 2, td: round(caliper * 1.2), to: round(caliper * 2 / 3) },
@@ -89,3 +92,4 @@ function UA_K016A({ length, width, depth, caliper }) {
 }
 
 export { UA_K016A as generateK016A };
+import { pointBounds } from "./svg.js";

@@ -74,4 +74,23 @@ describe("PDF 图纸导出", () => {
     expect(pdf).toContain("/Title <FEFF");
     expect(pdf).toContain("/Info 11 0 R");
   });
+
+  it("uses the generated box type and paper type in PDF metadata", async () => {
+    const { generate0421 } = await import("../src/generator0421.js");
+    const whiteCard = generate0421({
+      length: 300,
+      width: 200,
+      depth: 100,
+      caliper: 3,
+      paperType: "white-card",
+    });
+    const whiteCardPdf = decoder.decode(geometryToPdf(whiteCard, { date: "2026-08-13" }));
+    const subject = "0421 L300 W200 D100 CAL3 PAPER white-card";
+    const subjectHex = `<FEFF${[...subject]
+      .map((char) => char.codePointAt(0).toString(16).toUpperCase().padStart(4, "0"))
+      .join("")}>`;
+
+    expect(whiteCard.parameters.paperType).toBe("white-card");
+    expect(whiteCardPdf).toContain(subjectHex);
+  });
 });

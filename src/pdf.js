@@ -198,7 +198,8 @@ function hairline(yFromTopMm, pageHeightMm, lay) {
 }
 
 function sidebarText({ filename, date, parameters, overLimit, ratio, sideSum, pageHeightMm, lay }) {
-  const { caliper } = parameters;
+  const { caliper, paperType = "corrugated" } = parameters;
+  const paperLabel = paperType === "white-card" ? "白卡纸" : "瓦楞纸板";
   const die = dielineSize(parameters);
   const contentW = lay.sidebar - lay.left * 2;
   const nameLines = wrapByWidth(stripExportExt(filename), lay.titlePt, contentW);
@@ -233,6 +234,8 @@ function sidebarText({ filename, date, parameters, overLimit, ratio, sideSum, pa
   value(date);
   label("纸厚");
   value(`${fmt(caliper)} mm`);
+  label("纸型");
+  value(paperLabel);
   divider();
 
   label("刀模尺寸");
@@ -311,7 +314,7 @@ export function geometryToPdf(geometry, { filename = "dieline", date, ratio = 80
     `<< /Length ${toUnicodeLen} >>\nstream\n${toUnicode}\nendstream`,
   ];
   const info = `<< /Title ${utf16Hex(PROOF_NOTE)} /Subject ${utf16Hex(
-    `0202A L${parameters.length} W${parameters.width} D${parameters.depth} CAL${parameters.caliper}`,
+    `${parameters.boxType || "0202A"} L${parameters.length} W${parameters.width} D${parameters.depth} CAL${parameters.caliper} PAPER ${parameters.paperType || "corrugated"}`,
   )} >>`;
 
   const encoder = new TextEncoder();

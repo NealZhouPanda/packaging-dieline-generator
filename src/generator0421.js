@@ -42,7 +42,7 @@ function interpolateMeta(key, delta, selected) {
   return interpolate(selected.base.data.de[key], selected.variants.map((variant) => variant.de[key]), delta);
 }
 
-export function generate0421({ length, width, depth, caliper }) {
+export function generate0421({ length, width, depth, caliper, paperType = "corrugated" }) {
   validate("length", length);
   validate("width", width);
   validate("depth", depth);
@@ -67,11 +67,15 @@ export function generate0421({ length, width, depth, caliper }) {
     solidLength: interpolateMeta("SolidLength", delta, selected),
     foldLength: interpolateMeta("DashLength", delta, selected),
   };
+  const bounds = pointBounds(elements);
+  meta.width = round(bounds.maxX - bounds.minX);
+  meta.height = round(bounds.maxY - bounds.minY);
   meta.area = round(meta.width * meta.height);
   return {
-    parameters: { boxType: BOX_ID, length, width, depth, caliper, slotCount: 2 },
+    parameters: { boxType: BOX_ID, length, width, depth, caliper, paperType, slotCount: 2 },
     elements,
     meta,
     compensation: { sty1: 1, of: caliper, f: width / 2, td: round(caliper * 1.2), to: round(caliper * 2 / 3) },
   };
 }
+import { pointBounds } from "./svg.js";

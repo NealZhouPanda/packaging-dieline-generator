@@ -46,6 +46,7 @@ function values() {
   dimensions.caliper =
     fluteSelect.value === "custom" ? Number(customCaliperInput.value) : Number(fluteSelect.value);
   dimensions.boxType = boxTypeSelect.value;
+  dimensions.paperType = paperTypeSelect?.value || "corrugated";
   return dimensions;
 }
 

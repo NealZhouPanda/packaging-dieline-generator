@@ -139,7 +139,7 @@ function adjustSlotFloors(elements) {
  * kind: 0 = cut, 1 = fold.
  * The glue flap is a trapezoid calibrated against the 2021 production PDF.
  */
-export function generate0202A({ length, width, depth, caliper }) {
+export function generate0202A({ length, width, depth, caliper, paperType = "corrugated" }) {
   validateDimension("length", length);
   validateDimension("width", width);
   validateDimension("depth", depth);
@@ -185,7 +185,7 @@ export function generate0202A({ length, width, depth, caliper }) {
   };
 
   return {
-    parameters: { length, width, depth, caliper },
+    parameters: { boxType: "0202A", length, width, depth, caliper, paperType },
     elements,
     meta,
     compensation,
