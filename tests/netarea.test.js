@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { generate0202A } from "../src/generator0202a.js";
-import { blanksPerSheet, dieSize, dielineSize, netArea, outerSize, outerSizeFromDieline, sideHeights, sideSumCm, volumetricWeightKg } from "../src/netarea.js";
+import { generate0421 } from "../src/generator0421.js";
+import { generateK016A } from "../src/generatorK016A.js";
+import { blanksPerSheet, dieSize, dielineSize, netArea, outerSize, outerSizeFromDieline, sideHeights, sideSumCm, supportsNetArea, volumetricWeightKg } from "../src/netarea.js";
 
 describe("净面积", () => {
   it("默认尺寸：轮廓闭合，净面积稳定（结构差异在 1% 以内）", () => {
@@ -17,6 +19,20 @@ describe("净面积", () => {
     const rect = g.meta.width * g.meta.height;
     expect(area / rect).toBeGreaterThan(0.9);
     expect(area / rect).toBeLessThan(1);
+  });
+
+  it("0421 face data is explicitly disabled until multi-contour net area is calibrated", () => {
+    const geometry = generate0421({ length: 350, width: 190, depth: 230, caliper: 3 });
+
+    expect(geometry.elements.length).toBeGreaterThan(0);
+    expect(supportsNetArea(geometry.parameters.boxType)).toBe(false);
+  });
+
+  it("K016A face data is explicitly disabled until quadratic paths are calibrated", () => {
+    const geometry = generateK016A({ length: 350, width: 190, depth: 230, caliper: 3 });
+
+    expect(geometry.elements.some(([type]) => type === 2)).toBe(true);
+    expect(supportsNetArea(geometry.parameters.boxType)).toBe(false);
   });
 });
 

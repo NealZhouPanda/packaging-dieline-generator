@@ -1,7 +1,7 @@
 import { generate0202A } from "./generator0202a.js";
 import { generate0421 } from "./generator0421.js";
 import { generateK016A } from "./generatorK016A.js";
-import { blanksPerSheet, netArea, sideSumCm, volumetricWeightKg } from "./netarea.js";
+import { blanksPerSheet, netArea, sideSumCm, supportsNetArea, volumetricWeightKg } from "./netarea.js";
 import { detectFace, remapDimensions } from "./orientation.js";
 import { geometryToPdf, exportFilename, stripExportExt } from "./pdf.js";
 import { geometryToSvg } from "./svg.js";
@@ -68,9 +68,18 @@ function checkMaterial(blankWidth, blankHeight) {
 function refreshFaceData(current) {
   for (const span of document.querySelectorAll("[data-face-data]")) {
     const face = span.dataset.faceData;
+    if (!supportsNetArea(current.boxType)) {
+      span.textContent = "暂不支持";
+      continue;
+    }
     try {
       const dims = remapDimensions(current, face);
-      const geometry = generateBox({ ...dims, caliper: current.caliper, boxType: current.boxType });
+      const geometry = generateBox({
+        ...dims,
+        caliper: current.caliper,
+        boxType: current.boxType,
+        paperType: current.paperType,
+      });
       const area = netArea(geometry.elements);
       const count = blanksPerSheet(
         geometry.meta.width,

@@ -29,9 +29,8 @@ function arcPoints(element, steps = 16) {
 }
 
 /**
- * 将全部刀线（kind=0）按端点串成闭合轮廓，返回净面积（mm²）。
- * 0202A 的所有槽口都开在坯料边缘，因此全部刀线构成单条闭合轮廓。
- * 段可以正向或反向串联（数据中段的存储方向不保证一致）。
+ * 将 0202A 的刀线按端点串成闭合轮廓，返回净面积（mm²）。
+ * 0421/K016A 的几何包含多段面板辅助线和二次曲线，当前没有完整 NetArea 数据，页面会明确显示暂不支持。
  */
 export function netArea(elements) {
   const cuts = elements.filter((element) => element[1] === 0);
@@ -58,7 +57,6 @@ export function netArea(elements) {
     return null;
   };
 
-  // 先向尾部生长，卡住后从头部反向生长
   let tail = endpoints(cuts[0]).end;
   while (unused.size > 0) {
     const next = takeNext(key(...tail));
@@ -99,6 +97,11 @@ export function netArea(elements) {
     twice += x1 * y2 - x2 * y1;
   }
   return Math.abs(twice) / 2;
+}
+
+/** 当前只有 0202A 的刀线数据具备可验证的净面积闭合轮廓。 */
+export function supportsNetArea(boxType) {
+  return boxType === "0202A";
 }
 
 /**
@@ -158,6 +161,7 @@ export function sideSumCm(parameters) {
   const outer = outerSizeFromDieline(parameters);
   return (outer.length + outer.width + outer.depth) / 10;
 }
+
 export function blanksPerSheet(blankWidth, blankHeight, maxW, maxL) {
   const normal = Math.floor(maxW / blankWidth) * Math.floor(maxL / blankHeight);
   const rotated = Math.floor(maxW / blankHeight) * Math.floor(maxL / blankWidth);
