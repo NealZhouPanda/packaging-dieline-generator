@@ -23,6 +23,10 @@ function pathFor(element) {
     return `M ${x1} ${y1} A ${clean(radius)} ${clean(radius)} 0 ${delta > 180 ? 1 : 0} 1 ${x2} ${y2}`;
   }
   if (type === 2) {
+    if (element.length === 8) {
+      const [, , x1, y1, cx, cy, x2, y2] = element;
+      return `M ${clean(x1)} ${clean(y1)} Q ${clean(cx)} ${clean(cy)} ${clean(x2)} ${clean(y2)}`;
+    }
     const [, , x1, y1, cx1, cy1, cx2, cy2, x2, y2] = element;
     return `M ${clean(x1)} ${clean(y1)} C ${clean(cx1)} ${clean(cy1)} ${clean(cx2)} ${clean(cy2)} ${clean(x2)} ${clean(y2)}`;
   }
@@ -62,12 +66,7 @@ export function pointBounds(elements) {
       }
     }
     if (element[0] === 2) {
-      points.push(
-        [element[2], element[3]],
-        [element[4], element[5]],
-        [element[6], element[7]],
-        [element[8], element[9]],
-      );
+      for (let index = 2; index < element.length; index += 2) points.push([element[index], element[index + 1]]);
     }
   }
   return {

@@ -1,4 +1,6 @@
 import { generate0202A } from "./generator0202a.js";
+import { generate0421 } from "./generator0421.js";
+import { generateK016A } from "./generatorK016A.js";
 import { blanksPerSheet, netArea, sideSumCm, volumetricWeightKg } from "./netarea.js";
 import { detectFace, remapDimensions } from "./orientation.js";
 import { geometryToPdf, exportFilename, stripExportExt } from "./pdf.js";
@@ -9,6 +11,15 @@ const inputs = {
   width: document.querySelector("#width"),
   depth: document.querySelector("#depth"),
 };
+const boxTypeSelect = document.querySelector("#boxType");
+const paperTypeSelect = document.querySelector("#paperType");
+const generators = Object.freeze({ "0202A": generate0202A, "0421": generate0421, K016A: generateK016A });
+
+function generateBox(parameters) {
+  const generator = generators[parameters.boxType || "0202A"];
+  if (!generator) throw new RangeError(`Unknown box type: ${parameters.boxType}`);
+  return generator(parameters);
+}
 // 系统层限制：批量生产常见设备（1224 型水墨印刷开槽模切机）的最大进纸幅面。
 // 不在界面显示；如供应商设备不同，改这里即可。
 const SHEET_MAX = Object.freeze({ width: 1200, length: 2400 });
@@ -34,11 +45,12 @@ function values() {
   );
   dimensions.caliper =
     fluteSelect.value === "custom" ? Number(customCaliperInput.value) : Number(fluteSelect.value);
+  dimensions.boxType = boxTypeSelect.value;
   return dimensions;
 }
 
 function makeFilename(parameters) {
-  return `0202A_L${parameters.length}_W${parameters.width}_D${parameters.depth}_C${parameters.caliper}`;
+  return `${parameters.boxType || "0202A"}_L${parameters.length}_W${parameters.width}_D${parameters.depth}_C${parameters.caliper}`;
 }
 
 function checkMaterial(blankWidth, blankHeight) {
@@ -57,7 +69,7 @@ function refreshFaceData(current) {
     const face = span.dataset.faceData;
     try {
       const dims = remapDimensions(current, face);
-      const geometry = generate0202A({ ...dims, caliper: current.caliper });
+      const geometry = generateBox({ ...dims, caliper: current.caliper, boxType: current.boxType });
       const area = netArea(geometry.elements);
       const count = blanksPerSheet(
         geometry.meta.width,
@@ -75,7 +87,7 @@ function refreshFaceData(current) {
 
 function update() {
   try {
-    const geometry = generate0202A(values());
+    const geometry = generateBox(values());
     currentGeometry = geometry;
     currentSvg = geometryToSvg(geometry); // 预览用纯净版，不带注意事项
     if (!userEditedFilename) filenameInput.value = makeFilename(geometry.parameters);
@@ -153,6 +165,8 @@ fluteSelect.addEventListener("change", () => {
 customCaliperInput.addEventListener("input", update);
 dimRatioSelect.addEventListener("change", update);
 sideSumLimitInput.addEventListener("input", update);
+boxTypeSelect.addEventListener("change", update);
+paperTypeSelect?.addEventListener("change", update);
 
 filenameInput.addEventListener("input", () => {
   userEditedFilename = true;

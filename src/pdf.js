@@ -153,6 +153,15 @@ function dielineStream(geometry, lay) {
         `${round(p1[0])} ${round(p1[1])} m ${round(c1[0])} ${round(c1[1])} ${round(c2[0])} ${round(c2[1])} ${round(p2[0])} ${round(p2[1])} c S`,
       );
     } else if (element[0] === 2) {
+      if (element.length === 8) {
+        const [, , x1, y1, cx, cy, x2, y2] = element;
+        const c1 = [x1 + (2 / 3) * (cx - x1), y1 + (2 / 3) * (cy - y1)];
+        const c2 = [x2 + (2 / 3) * (cx - x2), y2 + (2 / 3) * (cy - y2)];
+        parts.push(
+          `${round(x1)} ${round(y1)} m ${round(c1[0])} ${round(c1[1])} ${round(c2[0])} ${round(c2[1])} ${round(x2)} ${round(y2)} c S`,
+        );
+        continue;
+      }
       const [, , x1, y1, cx1, cy1, cx2, cy2, x2, y2] = element;
       parts.push(
         `${round(x1)} ${round(y1)} m ${round(cx1)} ${round(cy1)} ${round(cx2)} ${round(cy2)} ${round(x2)} ${round(y2)} c S`,

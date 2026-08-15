@@ -21,13 +21,15 @@
         <aside class="controls" aria-label="刀模参数">
           <div class="section-heading">
             <span>01</span>
-            <div><h2>选择箱型</h2><p>当前开放一个已校准结构</p></div>
+            <div><h2>选择箱型</h2><p>当前开放 0202A、0421 与 K016A 三款结构</p></div>
           </div>
 
           <label class="field">
             <span>箱型</span>
             <select id="boxType">
               <option value="0202A">0202A · 普通开槽纸箱</option>
+              <option value="0421">0421 · 翻盖展示盒</option>
+              <option value="K016A">K016A · 提手盒</option>
             </select>
           </label>
 
@@ -37,9 +39,13 @@
           </div>
 
           <div class="dimension-grid">
-            <label class="field"><span>长 L（200–2000）</span><input id="length" type="number" min="200" max="2000" step="0.1" value="405" inputmode="decimal" /></label>
-            <label class="field"><span>宽 W（120–1200）</span><input id="width" type="number" min="120" max="1200" step="0.1" value="299" inputmode="decimal" /></label>
-            <label class="field"><span>高 D（50–1500）</span><input id="depth" type="number" min="50" max="1500" step="0.1" value="650" inputmode="decimal" /></label>
+            <label class="field"><span>长 L（200–2000）</span><input id="length" type="number" min="200" max="2000" step="0.1" value="350" inputmode="decimal" /></label>
+            <label class="field"><span>宽 W（120–1200）</span><input id="width" type="number" min="120" max="1200" step="0.1" value="190" inputmode="decimal" /></label>
+            <label class="field"><span>高 D（50–1500）</span><input id="depth" type="number" min="50" max="1500" step="0.1" value="230" inputmode="decimal" /></label>
+            <label class="field"><span>纸型</span><select id="paperType">
+              <option value="corrugated" selected>瓦楞纸板</option>
+              <option value="white-card">白卡纸</option>
+            </select></label>
             <label class="field"><span>瓦楞楞型</span><select id="flute">
               <option value="2">E 楞 2.0</option>
               <option value="3">B 楞 3.0</option>
