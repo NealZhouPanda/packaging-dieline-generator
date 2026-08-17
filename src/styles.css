@@ -39,7 +39,9 @@ h1 { margin: 0; font-size: 19px; line-height: 1; font-weight: 650; letter-spacin
 .field > span { color: #4e5963; font-size: 11px; font-weight: 600; }
 input, select { width: 100%; height: 36px; border: 1px solid #cfd5da; border-radius: 4px; padding: 0 10px; background: white; color: var(--ink); outline: none; }
 input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(20 109 91 / .1); }
-.dimension-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dimension-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.material-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+#customCaliperRow, #c001gxTongueStyleRow { margin-top: 10px; }
 .face-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .face-note { margin: 3px 2px 0; color: var(--muted); font-size: 10px; line-height: 1.3; white-space: nowrap; }
 .face-option { display: grid; justify-items: center; gap: 3px; padding: 7px 4px 6px; background: #fafbfc; border: 1.5px solid #d8dde1; border-radius: 6px; color: #4e5963; }
