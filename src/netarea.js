@@ -30,7 +30,7 @@ function arcPoints(element, steps = 16) {
 
 /**
  * 将 0202A 的刀线按端点串成闭合轮廓，返回净面积（mm²）。
- * 0421/K016A 的几何包含多段面板辅助线和二次曲线，当前没有完整 NetArea 数据，页面会明确显示暂不支持。
+ * 0421/K016A 的几何包含多段面板辅助线和二次曲线，当前没有完整 NetArea 数据，开口卡片改用展开包络估算。
  */
 export function netArea(elements) {
   const cuts = elements.filter((element) => element[1] === 0);

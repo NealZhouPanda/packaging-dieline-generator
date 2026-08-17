@@ -27,7 +27,7 @@
     ["插入式", "Insert style"],
     ["开口方向", "Opening face"],
     ["开口面 = 摇盖所在面，点击切换数据位置", "Opening face = flap side; click to switch dimensions"],
-    ["每张数量表示单位原纸张可切出的包装盒数量，可用于用纸和成本估算。", "Boxes per raw sheet; for material and cost estimates."],
+    ["面积为按刀模展开包络的估算值；每张数量表示单位原纸张可切出的包装盒数量，可用于用纸和成本估算。", "Area is a blank-envelope estimate. Boxes per raw sheet; for material and cost estimates."],
     ["大面", "Large face"],
     ["中面", "Medium face"],
     ["小面", "Small face"],

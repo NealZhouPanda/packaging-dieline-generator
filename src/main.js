@@ -96,14 +96,10 @@ function checkMaterial(blankWidth, blankHeight) {
     : `刀模展开 ${blankWidth}×${blankHeight}mm，超过材料幅面 ${maxW}×${maxL}mm：一张纸印不下，需与供应商确认分张或拼接方案。`;
 }
 
-/** 为三个开口方向分别计算净面积与每张可切数量，显示在图标上。 */
+/** 为三个开口方向分别计算面积与每张可切数量，显示在图标上。0202A 用校准过的净面积；其他箱型用展开包络估算。 */
 function refreshFaceData(current) {
   for (const span of document.querySelectorAll("[data-face-data]")) {
     const face = span.dataset.faceData;
-    if (!supportsNetArea(current.boxType)) {
-      span.textContent = "暂不支持";
-      continue;
-    }
     try {
       const dims = remapDimensions(current, face);
       const geometry = generateBox({
@@ -112,7 +108,9 @@ function refreshFaceData(current) {
         boxType: current.boxType,
         paperType: current.paperType,
       });
-      const area = netArea(geometry.elements);
+      const area = supportsNetArea(current.boxType)
+        ? netArea(geometry.elements)
+        : geometry.meta.width * geometry.meta.height;
       const count = blanksPerSheet(
         geometry.meta.width,
         geometry.meta.height,

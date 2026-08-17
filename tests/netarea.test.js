@@ -34,6 +34,15 @@ describe("净面积", () => {
     expect(geometry.elements.some(([type]) => type === 2)).toBe(true);
     expect(supportsNetArea(geometry.parameters.boxType)).toBe(false);
   });
+
+  it("未校准净面积的箱型用展开包络做开口面积估算", () => {
+    for (const generate of [generate0421, generateK016A]) {
+      const geometry = generate({ length: 350, width: 190, depth: 230, caliper: 3 });
+      const estimate = geometry.meta.width * geometry.meta.height;
+      expect(estimate).toBeGreaterThan(0);
+      expect(blanksPerSheet(geometry.meta.width, geometry.meta.height, 1200, 2400)).toBeGreaterThan(0);
+    }
+  });
 });
 
 describe("刀模尺寸", () => {
