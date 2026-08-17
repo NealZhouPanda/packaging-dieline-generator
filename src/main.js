@@ -23,6 +23,11 @@ function generateBox(parameters) {
 // 系统层限制：批量生产常见设备（1224 型水墨印刷开槽模切机）的最大进纸幅面。
 // 不在界面显示；如供应商设备不同，改这里即可。
 const SHEET_MAX = Object.freeze({ width: 1200, length: 2400 });
+// 白卡纸按大度平板纸 889×1194mm 估算，与瓦楞纸的 1200×2400 机台幅面不同。
+const SHEET_WHITE_CARD = Object.freeze({ width: 889, length: 1194 });
+function sheetSizeFor(paperType) {
+  return paperType === "white-card" ? SHEET_WHITE_CARD : SHEET_MAX;
+}
 const materialWarning = document.querySelector("#materialWarning");
 const dimRatioSelect = document.querySelector("#dimRatio");
 const sideSumLimitInput = document.querySelector("#sideSumLimit");
@@ -86,8 +91,8 @@ function makeFilename(parameters) {
   return `${parameters.boxType || "0202A"}_L${parameters.length}_W${parameters.width}_D${parameters.depth}_C${parameters.caliper}`;
 }
 
-function checkMaterial(blankWidth, blankHeight) {
-  const { width: maxW, length: maxL } = SHEET_MAX;
+function checkMaterial(blankWidth, blankHeight, paperType) {
+  const { width: maxW, length: maxL } = sheetSizeFor(paperType);
   const fits =
     (blankWidth <= maxW && blankHeight <= maxL) || (blankWidth <= maxL && blankHeight <= maxW);
   materialWarning.hidden = fits;
@@ -111,11 +116,12 @@ function refreshFaceData(current) {
       const area = supportsNetArea(current.boxType)
         ? netArea(geometry.elements)
         : geometry.meta.width * geometry.meta.height;
+      const sheet = sheetSizeFor(current.paperType);
       const count = blanksPerSheet(
         geometry.meta.width,
         geometry.meta.height,
-        SHEET_MAX.width,
-        SHEET_MAX.length,
+        sheet.width,
+        sheet.length,
       );
       span.textContent =
         count > 0 ? `${(area / 1e6).toFixed(3)}m²\n${count}个/张` : "超幅面";
@@ -147,7 +153,7 @@ function update() {
       document.querySelector("#volWeight").textContent =
         `${volumetricWeightKg(geometry.parameters, ratio).toFixed(1)} kg`;
     }
-    checkMaterial(geometry.meta.width, geometry.meta.height);
+    checkMaterial(geometry.meta.width, geometry.meta.height, geometry.parameters.paperType);
     refreshFaceData(geometry.parameters);
     error.hidden = true;
     downloadButton.disabled = false;
