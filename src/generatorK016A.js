@@ -62,7 +62,7 @@ function UA_K016A({ length, width, depth, caliper, paperType = "corrugated" }) {
   validate("width", width);
   validate("depth", depth);
   validate("caliper", caliper);
-  if (length < 200 || length > 2000 || width < 100 || width > 1200 || depth < 50 || depth > 1500) {
+  if (length < 50 || length > 2000 || width < 100 || width > 1200 || depth < 50 || depth > 1500) {
     throw new RangeError("K016A dimensions are outside the verified operating range");
   }
   if (caliper < 1 || caliper > 5) {

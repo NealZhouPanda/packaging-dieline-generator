@@ -115,7 +115,7 @@ function UA_K016A({ length, width, depth, caliper }) {
   validate("width", width);
   validate("depth", depth);
   validate("caliper", caliper);
-  if (length < 200 || length > 2000 || width < 100 || width > 1200 || depth < 50 || depth > 1500) {
+  if (length < 50 || length > 2000 || width < 100 || width > 1200 || depth < 50 || depth > 1500) {
     throw new RangeError("K016A dimensions are outside the verified operating range");
   }
   if (caliper < 1 || caliper > 5) {
@@ -148,7 +148,7 @@ const generationContext = { current: null };
 dA = function validateDieline({ length: B, width: A, depth: E, caliper: g }) {
   const { boxType: I, paperType: Q } = generationContext.current || {};
   const caliperRange = Q === "white-card" && (I === "0421" || I === "C001GX") ? [0.4, 0.8] : eA.caliper;
-  const ranges = { ...eA, caliper: caliperRange };
+  const ranges = { ...eA, length: [50, 2000], caliper: caliperRange };
   const labels = { length: "长 L", width: "宽 W", depth: "高 D", caliper: "纸厚" };
   const values = { length: B, width: A, depth: E, caliper: g };
   for (const [name, [min, max]] of Object.entries(ranges)) {
@@ -156,7 +156,6 @@ dA = function validateDieline({ length: B, width: A, depth: E, caliper: g }) {
       throw new RangeError(labels[name] + "超出已验证范围（" + min + "–" + max + " mm），该尺寸尚未校准，不能生成刀模");
     }
   }
-  if (A > B - 2) throw new RangeError("宽 W 必须比长 L 小 2mm 以上：接近正方形时摇盖结构会切换规则，尚未校准");
 };
 const generateBoxWithMaterial = UA;
 UA = function generateBoxWithMaterialWrapper(parameters) {
@@ -207,7 +206,7 @@ UA = function generateBoxWithMaterialWrapper(parameters) {
           </div>
 
           <div class="dimension-grid">
-            <label class="field"><span>长 L（200–2000）</span><input id="length" type="number" min="200" max="2000" step="0.1" value="350" inputmode="decimal" /></label>
+            <label class="field"><span>长 L（50–2000）</span><input id="length" type="number" min="50" max="2000" step="0.1" value="350" inputmode="decimal" /></label>
             <label class="field"><span>宽 W（120–1200）</span><input id="width" type="number" min="120" max="1200" step="0.1" value="190" inputmode="decimal" /></label>
             <label class="field"><span>高 D（50–1500）</span><input id="depth" type="number" min="50" max="1500" step="0.1" value="230" inputmode="decimal" /></label>
             <label class="field"><span>纸型</span><select id="paperType">

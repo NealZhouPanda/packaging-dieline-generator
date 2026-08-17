@@ -87,18 +87,21 @@ describe("0202A geometry", () => {
     expect(() => generate0202A({ length: 350, width: 190, depth: 230, caliper: 100 })).toThrow(
       /已验证范围/,
     );
-    expect(() => generate0202A({ length: 300, width: 299, depth: 230, caliper: 3 })).toThrow(
-      /小 2mm 以上/,
+    expect(() => generate0202A({ length: 49, width: 299, depth: 230, caliper: 3 })).toThrow(
+      /已验证范围/,
     );
   });
 
   it("accepts every corner of the verified envelope", () => {
-    for (const length of [200, 2000])
+    for (const length of [50, 2000])
       for (const width of [120, 1200])
         for (const depth of [50, 1500])
           for (const caliper of [1.5, 5]) {
-            if (width > length - 2) continue;
             expect(() => generate0202A({ length, width, depth, caliper })).not.toThrow();
           }
+  });
+
+  it("accepts a length smaller than width", () => {
+    expect(() => generate0202A({ length: 150, width: 200, depth: 100, caliper: 3 })).not.toThrow();
   });
 });

@@ -54,7 +54,13 @@ describe("K016A 提手盒", () => {
   });
 
   it("rejects dimensions outside the verified operating range", () => {
-    expect(() => generateK016A({ length: 199, width: 100, depth: 100, caliper: 3 })).toThrow(/verified/);
+    expect(() => generateK016A({ length: 49, width: 100, depth: 100, caliper: 3 })).toThrow(/verified/);
     expect(() => generateK016A({ length: 200, width: 100, depth: 100, caliper: 5.1 })).toThrow(/caliper/);
+  });
+
+  it("accepts a length smaller than width", () => {
+    const geometry = generateK016A({ length: 150, width: 200, depth: 100, caliper: 3 });
+
+    expect(() => geometryToSvg(geometry)).not.toThrow();
   });
 });

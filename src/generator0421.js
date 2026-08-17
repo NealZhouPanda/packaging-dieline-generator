@@ -47,7 +47,7 @@ export function generate0421({ length, width, depth, caliper, paperType = "corru
   validate("width", width);
   validate("depth", depth);
   validate("caliper", caliper);
-  if (length < 200 || length > 2000 || width < 120 || width > 1200 || depth < 50 || depth > 1500) {
+  if (length < 50 || length > 2000 || width < 120 || width > 1200 || depth < 50 || depth > 1500) {
     throw new RangeError("0421 dimensions are outside the verified operating range");
   }
   const caliperRange = paperType === "white-card" ? [0.4, 0.8] : [1.5, 5];
@@ -58,10 +58,6 @@ export function generate0421({ length, width, depth, caliper, paperType = "corru
         : "0421 caliper must be between 1.5 and 5 mm",
     );
   }
-  if (width > length - 2) {
-    throw new RangeError("0421 width must be at least 2 mm smaller than length");
-  }
-
   const selected = pickSet(length, width, depth, caliper);
   const delta = [length - selected.base.length, width - selected.base.width, depth - selected.base.depth, caliper - selected.base.caliper];
   const elements = selected.base.data.fe.map((element, index) => transformElement(element, index, delta, selected));
