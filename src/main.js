@@ -1,7 +1,7 @@
 import { generate0202A } from "./generator0202a.js";
 import { generate0421 } from "./generator0421.js";
 import { generateK016A } from "./generatorK016A.js";
-import { blanksPerSheet, netArea, sideSumCm, supportsNetArea, volumetricWeightKg } from "./netarea.js";
+import { blanksPerSheet, containerLoadCount, netArea, sideSumCm, supportsNetArea, volumetricWeightKg } from "./netarea.js";
 import { detectFace, remapDimensions } from "./orientation.js";
 import { geometryToPdf, exportFilename, stripExportExt } from "./pdf.js";
 import { geometryToSvg } from "./svg.js";
@@ -131,6 +131,23 @@ function refreshFaceData(current) {
   }
 }
 
+/** 按当前货柜型号，为三个开口方向分别计算理论满载箱数。 */
+function refreshContainerData(current) {
+  const key = document.querySelector("#containerType").value;
+  for (const cell of document.querySelectorAll("[data-container-face]")) {
+    try {
+      const dims = remapDimensions(current, cell.dataset.containerFace);
+      const count = containerLoadCount(
+        { ...dims, caliper: current.caliper, boxType: current.boxType },
+        key,
+      );
+      cell.textContent = count > 0 ? `${count} 箱` : "放不下";
+    } catch {
+      cell.textContent = "—";
+    }
+  }
+}
+
 function update() {
   try {
     const geometry = generateBox(values());
@@ -155,6 +172,7 @@ function update() {
     }
     checkMaterial(geometry.meta.width, geometry.meta.height, geometry.parameters.paperType);
     refreshFaceData(geometry.parameters);
+    refreshContainerData(geometry.parameters);
     error.hidden = true;
     downloadButton.disabled = false;
     downloadPdfButton.disabled = false;
@@ -213,6 +231,7 @@ fluteSelect.addEventListener("change", () => {
 customCaliperInput.addEventListener("input", update);
 dimRatioSelect.addEventListener("change", update);
 sideSumLimitInput.addEventListener("input", update);
+document.querySelector("#containerType").addEventListener("change", update);
 boxTypeSelect.addEventListener("change", update);
 paperTypeSelect?.addEventListener("change", () => {
   syncMaterialControls();

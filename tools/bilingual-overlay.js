@@ -8,6 +8,10 @@
     ["选择箱型", "Select box type"],
     ["开口面 = 摇盖所在面，点击切换数据位置；面积按刀模展开包络估算", "Opening face = the flap side; click to switch data. Area uses the blank-envelope estimate"],
     ["箱型", "Box type"],
+    ["装柜估算", "Container loading"],
+    ["货柜型号", "Container"],
+    ["理论估算（6 向排列取最大），实际装柜约为理论 ×0.88", "Theoretical max (best of 6 orientations); practical ≈ ×0.88"],
+    ["放不下", "Too big"],
     ["0201 · 标准纸箱", "0201 · Standard carton"],
 
     ["E005C · 翻盖飞机盒（0427）", "E005C · Flip-top mailer (0427)"],

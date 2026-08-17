@@ -125,6 +125,27 @@
             <strong id="volWeight">—</strong>
           </div>
 
+          <div class="section-heading compact">
+            <span>05</span>
+            <div><h2>装柜估算</h2><p>理论估算（6 向排列取最大），实际装柜约为理论 ×0.88</p></div>
+          </div>
+
+          <div class="container-params">
+            <label>货柜型号
+              <select id="containerType">
+                <option value="20GP">20GP · 5898×2352×2393</option>
+                <option value="40GP">40GP · 12032×2352×2393</option>
+                <option value="40HQ" selected>40HQ · 12032×2352×2698</option>
+                <option value="45HQ">45HQ · 13556×2352×2698</option>
+              </select>
+            </label>
+          </div>
+          <div class="container-result">
+            <div><span>大面</span><strong data-container-face="big">—</strong></div>
+            <div><span>中面</span><strong data-container-face="mid">—</strong></div>
+            <div><span>小面</span><strong data-container-face="small">—</strong></div>
+          </div>
+
           <p id="materialWarning" class="material-warning" role="alert" hidden></p>
           <p id="error" class="error" role="alert" hidden></p>
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { generate0202A } from "../src/generator0202a.js";
 import { generate0421 } from "../src/generator0421.js";
 import { generateK016A } from "../src/generatorK016A.js";
-import { blanksPerSheet, dieSize, dielineSize, netArea, outerSize, outerSizeFromDieline, sideHeights, sideSumCm, supportsNetArea, volumetricWeightKg } from "../src/netarea.js";
+import { blanksPerSheet, containerLoadCount, dieSize, dielineSize, netArea, outerSize, outerSizeFromDieline, sideHeights, sideSumCm, supportsNetArea, volumetricWeightKg } from "../src/netarea.js";
 
 describe("净面积", () => {
   it("默认尺寸：轮廓闭合，净面积稳定（结构差异在 1% 以内）", () => {
@@ -88,5 +88,20 @@ describe("每张可切数量", () => {
     expect(blanksPerSheet(300, 500, 1200, 2400)).toBe(16);
     // 放不下
     expect(blanksPerSheet(1300, 2500, 1200, 2400)).toBe(0);
+  });
+});
+
+describe("装柜估算", () => {
+  // 外尺寸 356×196×233（刀模 350×190×230 + 默认补偿 2T/2T/T，T=3）
+  const p = { length: 350, width: 190, depth: 230, caliper: 3, boxType: "0202A" };
+
+  it("6 向排列取最大：20GP=1920，40HQ=4356", () => {
+    expect(containerLoadCount(p, "20GP")).toBe(1920);
+    expect(containerLoadCount(p, "40HQ")).toBe(4356);
+  });
+
+  it("未知柜型或单箱超过柜内尺寸返回 0", () => {
+    expect(containerLoadCount(p, "XXL")).toBe(0);
+    expect(containerLoadCount({ ...p, length: 6000 }, "20GP")).toBe(0);
   });
 });

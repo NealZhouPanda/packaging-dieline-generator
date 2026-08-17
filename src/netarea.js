@@ -167,3 +167,33 @@ export function blanksPerSheet(blankWidth, blankHeight, maxW, maxL) {
   const rotated = Math.floor(maxW / blankHeight) * Math.floor(maxL / blankWidth);
   return Math.max(normal, rotated);
 }
+
+/** 常见干货柜内尺寸（mm），与公开规格的容积（33.2/67.7/76.4/86.1 m³）交叉验算一致。 */
+export const CONTAINERS = Object.freeze({
+  "20GP": Object.freeze({ length: 5898, width: 2352, height: 2393 }),
+  "40GP": Object.freeze({ length: 12032, width: 2352, height: 2393 }),
+  "40HQ": Object.freeze({ length: 12032, width: 2352, height: 2698 }),
+  "45HQ": Object.freeze({ length: 13556, width: 2352, height: 2698 }),
+});
+
+/**
+ * 理论满载箱数：按外尺寸在 6 个朝向下分别 floor 排列，取最大值。
+ * 行业装箱计算器标准算法；实际装柜约为理论值 ×0.88（规则纸箱装载率系数），
+ * 受柜内角铁、门梁、纸箱鼓胀等影响，本函数不含这些间隙修正。
+ */
+export function containerLoadCount(parameters, containerKey) {
+  const container = CONTAINERS[containerKey];
+  if (!container) return 0;
+  const outer = outerSizeFromDieline(parameters);
+  const dims = [outer.length, outer.width, outer.depth];
+  const containerDims = [container.length, container.width, container.height];
+  let best = 0;
+  for (const [i, j, k] of [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]]) {
+    const count =
+      Math.floor(containerDims[0] / dims[i]) *
+      Math.floor(containerDims[1] / dims[j]) *
+      Math.floor(containerDims[2] / dims[k]);
+    if (count > best) best = count;
+  }
+  return best;
+}
