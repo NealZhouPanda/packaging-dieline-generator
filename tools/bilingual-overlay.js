@@ -6,7 +6,6 @@
     ["运行状态", "Runtime status"],
     ["刀模参数", "Dieline parameters"],
     ["选择箱型", "Select box type"],
-    ["当前开放 0201、E005C 与 C001GX 三款结构", "Three box styles available: 0201, E005C, C001GX"],
     ["开口面 = 摇盖所在面，点击切换数据位置；面积按刀模展开包络估算", "Opening face = the flap side; click to switch data. Area uses the blank-envelope estimate"],
     ["箱型", "Box type"],
     ["0201 · 标准纸箱", "0201 · Standard carton"],
