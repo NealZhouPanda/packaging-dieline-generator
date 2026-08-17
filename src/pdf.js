@@ -1,6 +1,6 @@
 import { PDF_FONT } from "./font-subset.js";
 import { PDF_FONT_WIDTHS } from "./font-widths.js";
-import { dieSize, sideSumCm, volumetricWeightKg } from "./netarea.js";
+import { dielineSize, sideSumCm, volumetricWeightKg } from "./netarea.js";
 import { dedupeFoldLines, pointBounds } from "./svg.js";
 
 const MM_TO_PT = 72 / 25.4;
@@ -153,6 +153,15 @@ function dielineStream(geometry, lay) {
         `${round(p1[0])} ${round(p1[1])} m ${round(c1[0])} ${round(c1[1])} ${round(c2[0])} ${round(c2[1])} ${round(p2[0])} ${round(p2[1])} c S`,
       );
     } else if (element[0] === 2) {
+      if (element.length === 8) {
+        const [, , x1, y1, cx, cy, x2, y2] = element;
+        const c1 = [x1 + (2 / 3) * (cx - x1), y1 + (2 / 3) * (cy - y1)];
+        const c2 = [x2 + (2 / 3) * (cx - x2), y2 + (2 / 3) * (cy - y2)];
+        parts.push(
+          `${round(x1)} ${round(y1)} m ${round(c1[0])} ${round(c1[1])} ${round(c2[0])} ${round(c2[1])} ${round(x2)} ${round(y2)} c S`,
+        );
+        continue;
+      }
       const [, , x1, y1, cx1, cy1, cx2, cy2, x2, y2] = element;
       parts.push(
         `${round(x1)} ${round(y1)} m ${round(cx1)} ${round(cy1)} ${round(cx2)} ${round(cy2)} ${round(x2)} ${round(y2)} c S`,
@@ -189,8 +198,9 @@ function hairline(yFromTopMm, pageHeightMm, lay) {
 }
 
 function sidebarText({ filename, date, parameters, overLimit, ratio, sideSum, pageHeightMm, lay }) {
-  const { caliper } = parameters;
-  const die = dieSize(parameters);
+  const { caliper, paperType = "corrugated" } = parameters;
+  const paperLabel = paperType === "white-card" ? "白卡纸" : "瓦楞纸板";
+  const die = dielineSize(parameters);
   const contentW = lay.sidebar - lay.left * 2;
   const nameLines = wrapByWidth(stripExportExt(filename), lay.titlePt, contentW);
   const noteLines = wrapByWidth("首次投产前先打样核对", lay.valuePt, contentW);
@@ -224,6 +234,8 @@ function sidebarText({ filename, date, parameters, overLimit, ratio, sideSum, pa
   value(date);
   label("纸厚");
   value(`${fmt(caliper)} mm`);
+  label("纸型");
+  value(paperLabel);
   divider();
 
   label("刀模尺寸");
@@ -302,7 +314,7 @@ export function geometryToPdf(geometry, { filename = "dieline", date, ratio = 80
     `<< /Length ${toUnicodeLen} >>\nstream\n${toUnicode}\nendstream`,
   ];
   const info = `<< /Title ${utf16Hex(PROOF_NOTE)} /Subject ${utf16Hex(
-    `0202A L${parameters.length} W${parameters.width} D${parameters.depth} CAL${parameters.caliper}`,
+    `${parameters.boxType || "0202A"} L${parameters.length} W${parameters.width} D${parameters.depth} CAL${parameters.caliper} PAPER ${parameters.paperType || "corrugated"}`,
   )} >>`;
 
   const encoder = new TextEncoder();
