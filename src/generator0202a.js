@@ -27,7 +27,7 @@ function validateDimension(name, value) {
  * - CAL≤5：CAL≥8 时高低位补偿切换规则（双瓦楞未验证）。
  */
 const VERIFIED_RANGE = Object.freeze({
-  length: [200, 2000],
+  length: [50, 2000],
   width: [120, 1200],
   depth: [50, 1500],
   caliper: [1.5, 5],
@@ -40,9 +40,6 @@ function validateVerifiedRange({ length, width, depth, caliper }) {
     if (values[key] < min || values[key] > max) {
       throw new RangeError(`${labels[key]}超出已验证范围（${min}–${max} mm），该尺寸尚未校准，不能生成刀模`);
     }
-  }
-  if (width > length - 2) {
-    throw new RangeError("宽 W 必须比长 L 小 2mm 以上：接近正方形时摇盖结构会切换规则，尚未校准");
   }
 }
 

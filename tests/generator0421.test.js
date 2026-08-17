@@ -48,7 +48,13 @@ describe("0421 flip-top display box", () => {
   });
 
   it("rejects dimensions outside the current verified envelope", () => {
-    expect(() => generate0421({ length: 100, width: 200, depth: 100, caliper: 3 })).toThrow(/verified/);
+    expect(() => generate0421({ length: 49, width: 200, depth: 100, caliper: 3 })).toThrow(/verified/);
     expect(() => generate0421({ length: 300, width: 200, depth: 100, caliper: 6 })).toThrow(/caliper/);
+  });
+
+  it("accepts a length smaller than width", () => {
+    const geometry = generate0421({ length: 150, width: 200, depth: 100, caliper: 3 });
+
+    expect(() => geometryToSvg(geometry)).not.toThrow();
   });
 });
