@@ -1,7 +1,7 @@
 import { generate0202A } from "./generator0202a.js";
 import { generate0421 } from "./generator0421.js";
 import { generateK016A } from "./generatorK016A.js";
-import { blanksPerSheet, containerLoadCount, netArea, sideSumCm, supportsNetArea, volumetricWeightKg } from "./netarea.js";
+import { blanksPerSheet, containerLoadCount, netArea, PRACTICAL_LOAD_FACTOR, sideSumCm, supportsNetArea, volumetricWeightKg } from "./netarea.js";
 import { detectFace, remapDimensions } from "./orientation.js";
 import { geometryToPdf, exportFilename, stripExportExt } from "./pdf.js";
 import { geometryToSvg } from "./svg.js";
@@ -131,19 +131,22 @@ function refreshFaceData(current) {
   }
 }
 
-/** 按当前货柜型号，为三个开口方向分别计算理论满载箱数。 */
+/** 按当前货柜型号，为三个开口方向分别计算装柜数：主显实际估算（理论×0.88），小字附理论满载。 */
 function refreshContainerData(current) {
   const key = document.querySelector("#containerType").value;
   for (const cell of document.querySelectorAll("[data-container-face]")) {
+    const theory = cell.parentElement.querySelector("small");
     try {
       const dims = remapDimensions(current, cell.dataset.containerFace);
       const count = containerLoadCount(
         { ...dims, caliper: current.caliper, boxType: current.boxType },
         key,
       );
-      cell.textContent = count > 0 ? `${count} 箱` : "放不下";
+      cell.textContent = count > 0 ? `${Math.floor(count * PRACTICAL_LOAD_FACTOR)} 箱` : "放不下";
+      if (theory) theory.textContent = count > 0 ? `理论 ${count}` : "";
     } catch {
       cell.textContent = "—";
+      if (theory) theory.textContent = "";
     }
   }
 }

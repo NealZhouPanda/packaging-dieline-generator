@@ -10,7 +10,7 @@
     ["箱型", "Box type"],
     ["装柜估算", "Container loading"],
     ["货柜型号", "Container"],
-    ["理论估算（6 向排列取最大），实际装柜约为理论 ×0.88", "Theoretical max (best of 6 orientations); practical ≈ ×0.88"],
+    ["实际估算 = 理论满载（6 向排列取最大）×0.88 装载率系数", "Practical ≈ theoretical max (best of 6 orientations) × 0.88"],
     ["放不下", "Too big"],
     ["0201 · 标准纸箱", "0201 · Standard carton"],
 

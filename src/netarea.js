@@ -176,6 +176,13 @@ export const CONTAINERS = Object.freeze({
   "45HQ": Object.freeze({ length: 13556, width: 2352, height: 2698 }),
 });
 
+/** 实际装柜约为理论满载 ×0.88（规则纸箱装载率系数；柜内角铁、门梁、纸箱鼓胀等间隙修正已含在系数里）。 */
+export const PRACTICAL_LOAD_FACTOR = 0.88;
+
+export function practicalLoadCount(parameters, containerKey) {
+  return Math.floor(containerLoadCount(parameters, containerKey) * PRACTICAL_LOAD_FACTOR);
+}
+
 /**
  * 理论满载箱数：按外尺寸在 6 个朝向下分别 floor 排列，取最大值。
  * 行业装箱计算器标准算法；实际装柜约为理论值 ×0.88（规则纸箱装载率系数），

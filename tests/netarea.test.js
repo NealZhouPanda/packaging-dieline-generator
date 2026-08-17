@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { generate0202A } from "../src/generator0202a.js";
 import { generate0421 } from "../src/generator0421.js";
 import { generateK016A } from "../src/generatorK016A.js";
-import { blanksPerSheet, containerLoadCount, dieSize, dielineSize, netArea, outerSize, outerSizeFromDieline, sideHeights, sideSumCm, supportsNetArea, volumetricWeightKg } from "../src/netarea.js";
+import { blanksPerSheet, containerLoadCount, dieSize, dielineSize, netArea, outerSize, outerSizeFromDieline, practicalLoadCount, sideHeights, sideSumCm, supportsNetArea, volumetricWeightKg } from "../src/netarea.js";
 
 describe("净面积", () => {
   it("默认尺寸：轮廓闭合，净面积稳定（结构差异在 1% 以内）", () => {
@@ -98,6 +98,11 @@ describe("装柜估算", () => {
   it("6 向排列取最大：20GP=1920，40HQ=4356", () => {
     expect(containerLoadCount(p, "20GP")).toBe(1920);
     expect(containerLoadCount(p, "40HQ")).toBe(4356);
+  });
+
+  it("实际估算 = 理论 ×0.88 取整", () => {
+    expect(practicalLoadCount(p, "20GP")).toBe(1689);
+    expect(practicalLoadCount(p, "40HQ")).toBe(3833);
   });
 
   it("未知柜型或单箱超过柜内尺寸返回 0", () => {
