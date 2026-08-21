@@ -116,7 +116,8 @@ function hexGids(text, gids) {
 
 function arcToCubic(cx, cy, r, startDeg, endDeg) {
   const span = (((endDeg - startDeg) % 360) + 360) % 360;
-  const start = (startDeg * Math.PI) / 180;
+  // 与 SVG 一致：源角度按 Y 向上的数学坐标系定义，PDF 刀模坐标稍后再整体翻转。
+  const start = (-endDeg * Math.PI) / 180;
   const theta = (span * Math.PI) / 180;
   const k = (4 / 3) * Math.tan(theta / 4);
   const p1 = [cx + r * Math.cos(start), cy + r * Math.sin(start)];
@@ -153,18 +154,18 @@ function dielineStream(geometry, lay) {
         `${round(p1[0])} ${round(p1[1])} m ${round(c1[0])} ${round(c1[1])} ${round(c2[0])} ${round(c2[1])} ${round(p2[0])} ${round(p2[1])} c S`,
       );
     } else if (element[0] === 2) {
-      if (element.length === 8) {
-        const [, , x1, y1, cx, cy, x2, y2] = element;
-        const c1 = [x1 + (2 / 3) * (cx - x1), y1 + (2 / 3) * (cy - y1)];
-        const c2 = [x2 + (2 / 3) * (cx - x2), y2 + (2 / 3) * (cy - y2)];
-        parts.push(
-          `${round(x1)} ${round(y1)} m ${round(c1[0])} ${round(c1[1])} ${round(c2[0])} ${round(c2[1])} ${round(x2)} ${round(y2)} c S`,
-        );
-        continue;
+      if (element.length < 6 || element.length % 2 !== 0) {
+        throw new TypeError("Polyline geometry requires at least two complete points");
       }
-      const [, , x1, y1, cx1, cy1, cx2, cy2, x2, y2] = element;
+      const points = [];
+      for (let index = 2; index < element.length; index += 2) {
+        points.push([round(element[index]), round(element[index + 1])]);
+      }
       parts.push(
-        `${round(x1)} ${round(y1)} m ${round(cx1)} ${round(cy1)} ${round(cx2)} ${round(cy2)} ${round(x2)} ${round(y2)} c S`,
+        `${points[0][0]} ${points[0][1]} m ${points
+          .slice(1)
+          .map(([x, y]) => `${x} ${y} l`)
+          .join(" ")} S`,
       );
     }
   }
@@ -343,9 +344,10 @@ export function geometryToPdf(geometry, { filename = "dieline", date, ratio = 80
   const infoOffset = pdfBytes;
   push(`11 0 obj\n${info}\nendobj\n`);
   const xrefOffset = pdfBytes;
-  push("xref\n0 12\n0000000000 65535 f \n");
-  for (const offset of offsets) push(`${String(offset).padStart(10, "0")} 00000 n \n`);
-  push(`${String(infoOffset).padStart(10, "0")} 00000 n \n`);
+  const xrefLineEnd = [32, 10].map((code) => String.fromCharCode(code)).join("");
+  push(`xref\n0 12\n0000000000 65535 f${xrefLineEnd}`);
+  for (const offset of offsets) push(`${String(offset).padStart(10, "0")} 00000 n${xrefLineEnd}`);
+  push(`${String(infoOffset).padStart(10, "0")} 00000 n${xrefLineEnd}`);
   push(`trailer\n<< /Size 12 /Root 1 0 R /Info 11 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
 
   const result = new Uint8Array(pdfBytes);

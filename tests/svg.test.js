@@ -1,9 +1,32 @@
 import { describe, expect, it } from "vitest";
 import { generate0202A } from "../src/generator0202a.js";
 import { remapDimensions } from "../src/orientation.js";
-import { dedupeFoldLines, geometryToSvg } from "../src/svg.js";
+import { dedupeFoldLines, geometryToSvg, pointBounds } from "../src/svg.js";
 
 describe("SVG export", () => {
+  it("renders type 2 geometry as a polyline instead of a Bezier curve", () => {
+    const svg = geometryToSvg({
+      elements: [[2, 0, 0, 0, -30, 8.04, -30, 91.96, 0, 100]],
+      meta: { width: 30, height: 100, boxId: "polyline" },
+      parameters: { length: 30, width: 10, depth: 100, caliper: 1 },
+    });
+
+    expect(svg).toContain('d="M 0 0 L -30 8.04 L -30 91.96 L 0 100"');
+    expect(svg).not.toMatch(/ d="[^"]* [QC] /);
+  });
+
+  it("converts mathematical arc angles to the SVG downward-y coordinate system", () => {
+    const arc = [1, 0, 0, 0, 10, 0, 90];
+    const svg = geometryToSvg({
+      elements: [arc],
+      meta: { width: 10, height: 10, boxId: "arc" },
+      parameters: { length: 10, width: 10, depth: 10, caliper: 1 },
+    });
+
+    expect(svg).toContain('d="M 0 -10 A 10 10 0 0 1 10 0"');
+    expect(pointBounds([arc])).toEqual({ minX: 0, minY: -10, maxX: 10, maxY: 0 });
+  });
+
   it("exports all geometry as 1:1 mm vector paths", () => {
     const geometry = generate0202A({ length: 405, width: 299, depth: 650, caliper: 3 });
     const svg = geometryToSvg(geometry);

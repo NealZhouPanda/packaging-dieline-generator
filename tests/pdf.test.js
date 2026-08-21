@@ -33,6 +33,49 @@ describe("PDF 图纸导出", () => {
   });
   const pdf = decoder.decode(bytes);
 
+  it("将 type 2 几何导出为逐点折线，而不是贝塞尔曲线", () => {
+    const polylinePdf = decoder.decode(
+      geometryToPdf(
+        {
+          elements: [[2, 0, 0, 0, -30, 8.04, -30, 91.96, 0, 100]],
+          parameters: {
+            boxType: "polyline",
+            length: 30,
+            width: 10,
+            depth: 100,
+            caliper: 1,
+            paperType: "corrugated",
+          },
+        },
+        { date: "2026-08-20" },
+      ),
+    );
+
+    expect(polylinePdf).toContain("0 0 m -30 8.04 l -30 91.96 l 0 100 l S");
+    expect(polylinePdf).not.toContain(" c S");
+  });
+
+  it("按数学坐标角度方向导出圆弧", () => {
+    const arcPdf = decoder.decode(
+      geometryToPdf(
+        {
+          elements: [[1, 0, 0, 0, 10, 0, 90]],
+          parameters: {
+            boxType: "arc",
+            length: 10,
+            width: 10,
+            depth: 10,
+            caliper: 1,
+            paperType: "corrugated",
+          },
+        },
+        { date: "2026-08-20" },
+      ),
+    );
+
+    expect(arcPdf).toContain("0 -10 m 5.523 -10 10 -5.523 10 0 c S");
+  });
+
   it("生成合法 PDF 结构（含 90mm 信息栏，页面 = 侧栏 + 主区）", () => {
     expect(pdf.startsWith("%PDF-1.4\n")).toBe(true);
     expect(pdf).toMatch(/\/MediaBox \[0 0 [\d.]+ [\d.]+\]/);

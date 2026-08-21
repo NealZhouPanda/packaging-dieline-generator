@@ -17,18 +17,21 @@ function pathFor(element) {
   }
   if (type === 1) {
     const [, , cx, cy, radius, start, end] = element;
-    const [x1, y1] = arcPoint(cx, cy, radius, start);
-    const [x2, y2] = arcPoint(cx, cy, radius, end);
+    // 刀模角度采用数学坐标系（Y 向上）；SVG 坐标系 Y 向下，因此取反角度并交换端点。
+    const [x1, y1] = arcPoint(cx, cy, radius, -end);
+    const [x2, y2] = arcPoint(cx, cy, radius, -start);
     const delta = ((end - start) % 360 + 360) % 360;
     return `M ${x1} ${y1} A ${clean(radius)} ${clean(radius)} 0 ${delta > 180 ? 1 : 0} 1 ${x2} ${y2}`;
   }
   if (type === 2) {
-    if (element.length === 8) {
-      const [, , x1, y1, cx, cy, x2, y2] = element;
-      return `M ${clean(x1)} ${clean(y1)} Q ${clean(cx)} ${clean(cy)} ${clean(x2)} ${clean(y2)}`;
+    if (element.length < 6 || element.length % 2 !== 0) {
+      throw new TypeError("Polyline geometry requires at least two complete points");
     }
-    const [, , x1, y1, cx1, cy1, cx2, cy2, x2, y2] = element;
-    return `M ${clean(x1)} ${clean(y1)} C ${clean(cx1)} ${clean(cy1)} ${clean(cx2)} ${clean(cy2)} ${clean(x2)} ${clean(y2)}`;
+    const points = [];
+    for (let index = 2; index < element.length; index += 2) {
+      points.push(`${clean(element[index])} ${clean(element[index + 1])}`);
+    }
+    return `M ${points[0]} L ${points.slice(1).join(" L ")}`;
   }
   throw new TypeError(`Unsupported geometry element type: ${type}`);
 }
@@ -58,10 +61,11 @@ export function pointBounds(elements) {
     if (element[0] === 0) points.push([element[2], element[3]], [element[4], element[5]]);
     if (element[0] === 1) {
       const [, , cx, cy, r, start, end] = element;
-      points.push(arcPoint(cx, cy, r, start), arcPoint(cx, cy, r, end));
+      const renderStart = -end;
+      points.push(arcPoint(cx, cy, r, renderStart), arcPoint(cx, cy, r, -start));
       const span = (((end - start) % 360) + 360) % 360;
       for (const deg of [0, 90, 180, 270]) {
-        const delta = ((deg - start) % 360 + 360) % 360;
+        const delta = ((deg - renderStart) % 360 + 360) % 360;
         if (delta <= span) points.push(arcPoint(cx, cy, r, deg));
       }
     }

@@ -7,22 +7,36 @@ function endpoints(element) {
   }
   if (element[0] === 1) {
     const [, , cx, cy, r, start, end] = element;
-    const rad = (d) => (d * Math.PI) / 180;
+    const rad = (degrees) => (-degrees * Math.PI) / 180;
     return {
-      start: [cx + r * Math.cos(rad(start)), cy + r * Math.sin(rad(start))],
-      end: [cx + r * Math.cos(rad(end)), cy + r * Math.sin(rad(end))],
+      start: [cx + r * Math.cos(rad(end)), cy + r * Math.sin(rad(end))],
+      end: [cx + r * Math.cos(rad(start)), cy + r * Math.sin(rad(start))],
     };
+  }
+  if (element[0] === 2) {
+    const points = [];
+    for (let index = 2; index < element.length; index += 2) {
+      points.push([element[index], element[index + 1]]);
+    }
+    return { start: points[0], end: points.at(-1) };
   }
   throw new TypeError(`Unsupported element type: ${element[0]}`);
 }
 
 /** 把圆弧细分为折线点列（含首尾），用于面积积分。 */
 function arcPoints(element, steps = 16) {
+  if (element[0] === 2) {
+    const points = [];
+    for (let index = 2; index < element.length; index += 2) {
+      points.push([element[index], element[index + 1]]);
+    }
+    return points;
+  }
   const [, , cx, cy, r, start, end] = element;
   const span = (((end - start) % 360) + 360) % 360;
   const points = [];
   for (let i = 0; i <= steps; i += 1) {
-    const angle = ((start + (span * i) / steps) * Math.PI) / 180;
+    const angle = (-(end - (span * i) / steps) * Math.PI) / 180;
     points.push([cx + r * Math.cos(angle), cy + r * Math.sin(angle)]);
   }
   return points;

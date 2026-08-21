@@ -28,7 +28,7 @@ describe("净面积", () => {
     expect(supportsNetArea(geometry.parameters.boxType)).toBe(false);
   });
 
-  it("K016A face data is explicitly disabled until quadratic paths are calibrated", () => {
+  it("K016A face data is explicitly disabled until multi-contour net area is calibrated", () => {
     const geometry = generateK016A({ length: 350, width: 190, depth: 230, caliper: 3 });
 
     expect(geometry.elements.some(([type]) => type === 2)).toBe(true);

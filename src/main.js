@@ -1,6 +1,7 @@
 import { generate0202A } from "./generator0202a.js";
 import { generate0421 } from "./generator0421.js";
 import { generateK016A } from "./generatorK016A.js";
+import { generate0201, generateC001GX, generateE005C } from "./generators-legacy.js";
 import { blanksPerSheet, containerLoadCount, netArea, PRACTICAL_LOAD_FACTOR, sideSumCm, supportsNetArea, volumetricWeightKg } from "./netarea.js";
 import { detectFace, remapDimensions } from "./orientation.js";
 import { geometryToPdf, exportFilename, stripExportExt } from "./pdf.js";
@@ -13,10 +14,17 @@ const inputs = {
 };
 const boxTypeSelect = document.querySelector("#boxType");
 const paperTypeSelect = document.querySelector("#paperType");
-const generators = Object.freeze({ "0202A": generate0202A, "0421": generate0421, K016A: generateK016A });
+const generators = Object.freeze({
+  "0201": generate0201,
+  "0202A": generate0202A,
+  "0421": generate0421,
+  K016A: generateK016A,
+  E005C: generateE005C,
+  C001GX: generateC001GX,
+});
 
 function generateBox(parameters) {
-  const generator = generators[parameters.boxType || "0202A"];
+  const generator = generators[parameters.boxType || "0201"];
   if (!generator) throw new RangeError(`Unknown box type: ${parameters.boxType}`);
   return generator(parameters);
 }
@@ -35,11 +43,14 @@ const fluteSelect = document.querySelector("#flute");
 const fluteLabel = fluteSelect?.parentElement?.querySelector("span");
 const customCaliperRow = document.querySelector("#customCaliperRow");
 const customCaliperInput = document.querySelector("#caliper");
+const c001gxTongueStyleRow = document.querySelector("#c001gxTongueStyleRow");
+const c001gxTongueStyleSelect = document.querySelector("#c001gxTongueStyle");
 const preview = document.querySelector("#preview");
 const error = document.querySelector("#error");
 const downloadButton = document.querySelector("#download");
 const downloadPdfButton = document.querySelector("#downloadPdf");
 const filenameInput = document.querySelector("#filename");
+const containerTypeSelect = document.querySelector("#containerType");
 
 let currentGeometry = null;
 let currentSvg = "";
@@ -84,11 +95,14 @@ function values() {
         : Number(fluteSelect.value);
   dimensions.boxType = boxTypeSelect.value;
   dimensions.paperType = paperTypeSelect?.value || "corrugated";
+  dimensions.c001gxTongueStyle = Number(c001gxTongueStyleSelect?.value || 2);
+  if (c001gxTongueStyleRow) c001gxTongueStyleRow.hidden = dimensions.boxType !== "C001GX";
   return dimensions;
 }
 
 function makeFilename(parameters) {
-  return `${parameters.boxType || "0202A"}_L${parameters.length}_W${parameters.width}_D${parameters.depth}_C${parameters.caliper}`;
+  const style = parameters.boxType === "C001GX" ? `_S${parameters.c001gxTongueStyle || 2}` : "";
+  return `${parameters.boxType || "0201"}_L${parameters.length}_W${parameters.width}_D${parameters.depth}_C${parameters.caliper}${style}`;
 }
 
 function checkMaterial(blankWidth, blankHeight, paperType) {
@@ -103,6 +117,7 @@ function checkMaterial(blankWidth, blankHeight, paperType) {
 
 /** 为三个开口方向分别计算面积与每张可切数量，显示在图标上。0202A 用校准过的净面积；其他箱型用展开包络估算。 */
 function refreshFaceData(current) {
+  const sheet = sheetSizeFor(current.paperType);
   for (const span of document.querySelectorAll("[data-face-data]")) {
     const face = span.dataset.faceData;
     try {
@@ -116,7 +131,6 @@ function refreshFaceData(current) {
       const area = supportsNetArea(current.boxType)
         ? netArea(geometry.elements)
         : geometry.meta.width * geometry.meta.height;
-      const sheet = sheetSizeFor(current.paperType);
       const count = blanksPerSheet(
         geometry.meta.width,
         geometry.meta.height,
@@ -133,7 +147,7 @@ function refreshFaceData(current) {
 
 /** 按当前货柜型号，为三个开口方向分别计算装柜数：主显实际估算（理论×0.88），小字附理论满载。 */
 function refreshContainerData(current) {
-  const key = document.querySelector("#containerType").value;
+  const key = containerTypeSelect?.value;
   for (const cell of document.querySelectorAll("[data-container-face]")) {
     const theory = cell.parentElement.querySelector("small");
     try {
@@ -234,10 +248,36 @@ fluteSelect.addEventListener("change", () => {
 customCaliperInput.addEventListener("input", update);
 dimRatioSelect.addEventListener("change", update);
 sideSumLimitInput.addEventListener("input", update);
-document.querySelector("#containerType").addEventListener("change", update);
-boxTypeSelect.addEventListener("change", update);
+containerTypeSelect?.addEventListener("change", update);
+const boxDefaults = Object.freeze({
+  "0201": { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 5 },
+  "0421": { length: 350, width: 190, depth: 230, paperType: "white-card", caliper: 0.5 },
+  K016A: { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 3 },
+  E005C: { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 3 },
+  C001GX: { length: 350, width: 190, depth: 230, paperType: "white-card", caliper: 0.5 },
+});
+
+function applyBoxDefaults(boxType) {
+  const defaults = boxDefaults[boxType];
+  if (!defaults) return;
+  for (const key of ["length", "width", "depth"]) inputs[key].value = defaults[key];
+  paperTypeSelect.value = defaults.paperType;
+  syncMaterialControls();
+  fluteSelect.value = String(defaults.caliper);
+  if (c001gxTongueStyleRow) c001gxTongueStyleRow.hidden = boxType !== "C001GX";
+  userEditedFilename = false;
+}
+
+boxTypeSelect.addEventListener("change", () => {
+  applyBoxDefaults(boxTypeSelect.value);
+  update();
+});
 paperTypeSelect?.addEventListener("change", () => {
   syncMaterialControls();
+  update();
+});
+c001gxTongueStyleSelect?.addEventListener("change", () => {
+  userEditedFilename = false;
   update();
 });
 

@@ -21,15 +21,17 @@
         <aside class="controls" aria-label="刀模参数">
           <div class="section-heading">
             <span>01</span>
-            <div><h2>选择箱型</h2><p>当前开放 0202A、0421 与 K016A 三款结构</p></div>
+            <div><h2>选择箱型</h2><p>当前开放 0201、0421、K016A、E005C 与 C001GX 五款结构</p></div>
           </div>
 
           <label class="field">
             <span>箱型</span>
             <select id="boxType">
-              <option value="0202A">0202A · 普通开槽纸箱</option>
+              <option value="0201">0201 · 标准纸箱</option>
               <option value="0421">0421 · 翻盖展示盒</option>
               <option value="K016A">K016A · 提手盒</option>
+              <option value="E005C">0427 · 翻盖飞机盒</option>
+              <option value="C001GX">C001GX · 翻盖锁扣纸盒</option>
             </select>
           </label>
 
@@ -43,7 +45,6 @@
             <label class="field"><span>宽 W（120–1200）</span><input id="width" type="number" min="120" max="1200" step="0.1" value="190" inputmode="decimal" /></label>
             <label class="field"><span>高 D（50–1500）</span><input id="depth" type="number" min="50" max="1500" step="0.1" value="230" inputmode="decimal" /></label>
           </div>
-
           <div class="material-grid">
             <label class="field"><span>纸型</span><select id="paperType">
               <option value="corrugated" selected>瓦楞纸板</option>
@@ -61,6 +62,14 @@
           <label class="field" id="customCaliperRow" hidden>
             <span>自定义纸厚（1.5–5.0 mm）</span>
             <input id="caliper" type="number" min="1.5" max="5" step="0.1" value="3" inputmode="decimal" />
+          </label>
+
+          <label class="field" id="c001gxTongueStyleRow" hidden>
+            <span>C001GX 插舌样式</span>
+            <select id="c001gxTongueStyle">
+              <option value="2" selected>插卡式</option>
+              <option value="1">插入式</option>
+            </select>
           </label>
 
           <div class="section-heading compact">
@@ -129,7 +138,6 @@
             <span>05</span>
             <div><h2>装柜估算</h2><p>实际估算 = 理论满载（6 向排列取最大）×0.88 装载率系数</p></div>
           </div>
-
           <div class="container-params">
             <label>货柜型号
               <select id="containerType">
@@ -167,7 +175,7 @@
           <div class="preview-toolbar">
             <div>
               <span class="file-label">刀模文件名（可改，下载时自动加 .svg / .pdf）</span>
-              <input id="filename" class="file-name-input" value="0202A_L405_W299_D650_C5" spellcheck="false" />
+              <input id="filename" class="file-name-input" value="0201_L350_W190_D230_C5" spellcheck="false" />
             </div>
             <div class="legend"><span class="cut-key"></span>刀线 <span class="fold-key"></span>压痕线</div>
           </div>
