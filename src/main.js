@@ -2,10 +2,13 @@ import { generate0202A } from "./generator0202a.js";
 import { generate0421 } from "./generator0421.js";
 import { generateK016A } from "./generatorK016A.js";
 import { generate0201, generateC001GX, generateE005C } from "./generators-legacy.js";
+import { supportsBoxTopology } from "./box-topology.js";
 import { blanksPerSheet, containerLoadCount, netArea, PRACTICAL_LOAD_FACTOR, sideSumCm, supportsNetArea, volumetricWeightKg } from "./netarea.js";
 import { detectFace, remapDimensions } from "./orientation.js";
 import { geometryToPdf, exportFilename, stripExportExt } from "./pdf.js";
 import { geometryToSvg } from "./svg.js";
+import { TextureEditor } from "./texture-editor.js";
+import { ThreePreview } from "./three-preview.js";
 
 const inputs = {
   length: document.querySelector("#length"),
@@ -50,7 +53,15 @@ const error = document.querySelector("#error");
 const downloadButton = document.querySelector("#download");
 const downloadPdfButton = document.querySelector("#downloadPdf");
 const filenameInput = document.querySelector("#filename");
+const snapshotButton = document.querySelector("#threeSnapshot");
 const containerTypeSelect = document.querySelector("#containerType");
+const viewTabs = [...document.querySelectorAll("[data-view-tab]")];
+const designViews = {
+  structure: document.querySelector("#preview"),
+  texture: document.querySelector("#textureView"),
+  three: document.querySelector("#threeView"),
+};
+let currentView = "structure";
 
 let currentGeometry = null;
 let currentSvg = "";
@@ -59,6 +70,80 @@ const corrugatedFluteOptions = fluteSelect?.innerHTML || "";
 let materialMode = paperTypeSelect?.value === "white-card" ? "white-card" : "corrugated";
 let corrugatedFluteValue = fluteSelect?.value || "5";
 let whiteCardCaliperValue = "0.5";
+let threePreview = null;
+
+function setDesignView(view) {
+  const supported = supportsBoxTopology(currentGeometry?.parameters?.boxType);
+  const nextView = view === "structure" || supported ? view : "structure";
+  currentView = nextView;
+  for (const tab of viewTabs) {
+    const active = tab.dataset.viewTab === nextView;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-selected", String(active));
+  }
+  for (const [key, node] of Object.entries(designViews)) node.hidden = key !== nextView;
+  if (nextView === "three") {
+    // 标签切换时再提交一次当前画布，避免贴图页已更新但 3D 仍停留在旧材质。
+    threePreview?.setTextureCanvas(textureEditor.getArtworkCanvas());
+    threePreview?.resize();
+  }
+}
+
+function syncDesignTabs(boxType) {
+  const supported = supportsBoxTopology(boxType);
+  for (const tab of viewTabs) {
+    const isDesignTab = tab.dataset.viewTab !== "structure";
+    tab.disabled = isDesignTab && !supported;
+    tab.title = isDesignTab && !supported ? "当前盒形尚未接入贴图与 3D" : "";
+  }
+  if (!supported && currentView !== "structure") setDesignView("structure");
+}
+
+for (const tab of viewTabs) tab.addEventListener("click", () => setDesignView(tab.dataset.viewTab));
+
+const textureEditor = new TextureEditor({
+  canvas: document.querySelector("#textureCanvas"),
+  fileInput: document.querySelector("#textureFileInput"),
+  layerList: document.querySelector("#textureLayers"),
+  status: document.querySelector("#textureStatus"),
+  onChange: (canvas) => threePreview?.setTextureCanvas(canvas),
+});
+
+document.querySelector("#textureImport").addEventListener("click", () => document.querySelector("#textureFileInput").click());
+document.querySelector("#textureReset").addEventListener("click", () => textureEditor.reset());
+document.querySelector("#textureClear").addEventListener("click", () => textureEditor.clear());
+
+threePreview = new ThreePreview({
+  host: document.querySelector("#threeHost"),
+  rotationInput: document.querySelector("#threeRotation"),
+  rotationValue: document.querySelector("#threeRotationValue"),
+  foldInput: document.querySelector("#threeFold"),
+  foldValue: document.querySelector("#threeFoldValue"),
+  foldButton: document.querySelector("#threeFoldToggle"),
+  resetButton: document.querySelector("#threeReset"),
+  paperColorInput: document.querySelector("#threePaperColor"),
+  light1Input: document.querySelector("#threeLight1"),
+  light2Input: document.querySelector("#threeLight2"),
+  edgeTextureButtons: [...document.querySelectorAll("[data-edge-texture]")],
+});
+
+snapshotButton?.addEventListener("click", async () => {
+  snapshotButton.disabled = true;
+  snapshotButton.textContent = "正在生成高清图片…";
+  try {
+    const filename = exportFilename(`${stripExportExt(filenameInput.value)}_3D`, "png");
+    const { width, height } = await threePreview.downloadSnapshot(filename);
+    snapshotButton.textContent = `已保存 ${width}×${height} PNG`;
+  } catch (snapshotError) {
+    console.error(snapshotError);
+    snapshotButton.textContent = "保存失败，请重试";
+  } finally {
+    window.setTimeout(() => {
+      snapshotButton.disabled = false;
+      snapshotButton.textContent = "保存当前视角图片";
+    }, 1800);
+  }
+});
 
 function syncMaterialControls() {
   if (!fluteSelect || !paperTypeSelect) return;
@@ -173,6 +258,9 @@ function update() {
     if (!userEditedFilename) filenameInput.value = makeFilename(geometry.parameters);
 
     preview.innerHTML = currentSvg.replace(/^<\?xml[^>]+>\s*/, "");
+    textureEditor.setGeometry(geometry);
+    threePreview.setGeometry(geometry);
+    syncDesignTabs(geometry.parameters.boxType);
     document.querySelector("#sheetWidth").textContent = `${geometry.meta.width} mm`;
     document.querySelector("#sheetHeight").textContent = `${geometry.meta.height} mm`;
     const ratio = Number(dimRatioSelect.value);
@@ -199,6 +287,8 @@ function update() {
     downloadButton.disabled = true;
     downloadPdfButton.disabled = true;
     preview.replaceChildren();
+    textureEditor.setGeometry(null);
+    threePreview.setGeometry(null);
   }
 }
 
@@ -251,7 +341,7 @@ sideSumLimitInput.addEventListener("input", update);
 containerTypeSelect?.addEventListener("change", update);
 const boxDefaults = Object.freeze({
   "0201": { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 5 },
-  "0421": { length: 350, width: 190, depth: 230, paperType: "white-card", caliper: 0.5 },
+  "0421": { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 5 },
   K016A: { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 3 },
   E005C: { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 3 },
   C001GX: { length: 350, width: 190, depth: 230, paperType: "white-card", caliper: 0.5 },
@@ -321,3 +411,4 @@ downloadPdfButton.addEventListener("click", () => {
 
 syncMaterialControls();
 update();
+setDesignView("structure");

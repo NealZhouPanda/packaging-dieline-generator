@@ -179,7 +179,85 @@
             </div>
             <div class="legend"><span class="cut-key"></span>刀线 <span class="fold-key"></span>压痕线</div>
           </div>
-          <div id="preview" class="preview" aria-label="二维刀模图"></div>
+          <nav class="view-tabs" aria-label="预览模式">
+            <button type="button" class="view-tab active" data-view-tab="structure" aria-selected="true">结构</button>
+            <button type="button" class="view-tab" data-view-tab="texture" aria-selected="false">贴图</button>
+            <button type="button" class="view-tab" data-view-tab="three" aria-selected="false">3D</button>
+          </nav>
+          <div class="view-stage">
+            <div id="preview" class="preview" aria-label="二维刀模图"></div>
+
+            <section id="textureView" class="design-view" aria-label="盒形贴图编辑" hidden>
+              <div class="design-view-head">
+                <div>
+                  <strong>刀模贴图</strong>
+                  <span id="textureStatus">导入 PNG、JPG 或 SVG，贴图会同步到 3D。</span>
+                </div>
+                <div class="design-actions">
+                  <input id="textureFileInput" type="file" accept="image/png,image/jpeg,image/svg+xml,.svg" multiple hidden />
+                  <button id="textureImport" type="button" class="tool-button primary-small">导入贴图</button>
+                  <button id="textureReset" type="button" class="tool-button">恢复铺满</button>
+                  <button id="textureClear" type="button" class="tool-button">清空</button>
+                </div>
+              </div>
+              <div class="texture-layout">
+                <div class="texture-canvas-wrap">
+                  <canvas id="textureCanvas" aria-label="盒形贴图画布"></canvas>
+                </div>
+                <aside class="texture-layers" aria-label="贴图图层">
+                  <strong>图层列表</strong>
+                  <div id="textureLayers"></div>
+                  <p>当前导入的图案使用完整刀模画布定位；后续可继续增加图层拖拽、缩放与 PDF 导入。</p>
+                </aside>
+              </div>
+            </section>
+
+            <section id="threeView" class="design-view" aria-label="盒形三维预览" hidden>
+              <div class="three-layout">
+                <div id="threeHost" class="three-host" aria-label="盒形三维刀模"></div>
+                <aside class="three-controls" aria-label="3D 控制">
+                  <strong>盒形三维预览</strong>
+                  <p>贴图画布与当前 3D 外观实时联动，可拖动模型查看各面。</p>
+                  <label class="range-field" for="threeRotation">
+                    <span>刀模旋转</span>
+                    <output id="threeRotationValue">30°</output>
+                  </label>
+                  <input id="threeRotation" type="range" min="0" max="360" step="1" value="30" />
+                  <label class="range-field" for="threeFold">
+                    <span>折叠程度</span>
+                    <output id="threeFoldValue">100%</output>
+                  </label>
+                  <input id="threeFold" type="range" min="0" max="1" step="0.01" value="1" />
+                  <button id="threeFoldToggle" type="button" class="tool-button">展开刀模</button>
+                  <label class="color-field" for="threePaperColor">
+                    <span>纸张底色</span>
+                    <input id="threePaperColor" type="color" value="#d7b78e" />
+                  </label>
+                  <fieldset class="edge-texture-field">
+                    <legend>纸厚纹理</legend>
+                    <div class="edge-texture-options" role="radiogroup" aria-label="纸厚纹理">
+                      <button type="button" class="edge-texture-option" data-edge-texture="wa3" aria-pressed="false" aria-label="wa3 瓦楞纹路" title="wa3 瓦楞纹路"></button>
+                      <button type="button" class="edge-texture-option is-active" data-edge-texture="wa5" aria-pressed="true" aria-label="wa5 瓦楞纹路" title="wa5 瓦楞纹路"></button>
+                      <button type="button" class="edge-texture-option" data-edge-texture="wa7" aria-pressed="false" aria-label="wa7 瓦楞纹路" title="wa7 瓦楞纹路"></button>
+                      <button type="button" class="edge-texture-option" data-edge-texture="feng" aria-pressed="false" aria-label="feng 瓦楞纹路" title="feng 瓦楞纹路"></button>
+                    </div>
+                  </fieldset>
+                  <button id="threeReset" type="button" class="tool-button">还原视角</button>
+                  <div class="three-light-controls" aria-label="3D 灯光">
+                    <label class="range-field" for="threeLight1">
+                      <span>全局光</span>
+                    </label>
+                    <input id="threeLight1" type="range" min="0" max="100" step="1" value="80" />
+                    <label class="range-field" for="threeLight2">
+                      <span>泛光</span>
+                    </label>
+                    <input id="threeLight2" type="range" min="0" max="100" step="1" value="70" />
+                  </div>
+                  <button id="threeSnapshot" type="button" class="tool-button primary-small snapshot-button">保存当前视角图片</button>
+                </aside>
+              </div>
+            </section>
+          </div>
           <div class="calibration-note">
             <strong>注意</strong>
             <span>首次投产前先打样核对。</span>

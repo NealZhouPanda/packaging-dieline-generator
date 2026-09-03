@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { promisify } from "node:util";
 
@@ -20,6 +20,21 @@ async function findViteCli() {
   const packageDir = entries.find((entry) => entry.startsWith("vite@"));
   if (!packageDir) throw new Error("Vite is not installed; run npm ci first");
   return resolve(pnpmDir, packageDir, "node_modules/vite/bin/vite.js");
+}
+
+async function copyBuildOutput(source, destination) {
+  if (process.platform !== "win32") {
+    await copyFile(source, destination);
+    return;
+  }
+
+  const quotePowerShell = (value) => value.replaceAll("'", "''");
+  await execFileAsync("powershell.exe", [
+    "-NoProfile",
+    "-NonInteractive",
+    "-Command",
+    `Copy-Item -LiteralPath '${quotePowerShell(source)}' -Destination '${quotePowerShell(destination)}' -Force`,
+  ]);
 }
 
 await rm(tempDir, { recursive: true, force: true });
@@ -44,15 +59,16 @@ try {
   ]);
 
   html = html
-    .replace(scriptMatch[0], `<script type="module">${javascript}</script>`)
-    .replace(styleMatch[0], `<style>${css}</style>`)
-    .replace("</body>", `<script data-bilingual-overlay>${overlay}</script>\n</body>`);
-  html = html.replace(/\r\n?/g, "\n");
+    .replace(scriptMatch[0], () => `<script type="module">${javascript}</script>`)
+    .replace(styleMatch[0], () => `<style>${css}</style>`)
+    .replace("</body>", () => `<script data-bilingual-overlay>${overlay}</script>\n</body>`);
+  html = html.replace(/\r\n?/g, "\n").replace(/[ \t]+$/gm, "");
 
-  if (/\b(?:src|href)="\/(?:src|assets)\//.test(html)) {
+  if (/<(?:script|link|img|iframe|source)\b[^>]+(?:src|href)="\/(?:src|assets)\//i.test(html)) {
     throw new Error("Single-file build still contains local asset references");
   }
-  if (/https?:\/\//.test(html.replaceAll('xmlns="http://www.w3.org/2000/svg"', ""))) {
+  const htmlWithoutSvgNamespace = html.replaceAll('xmlns="http://www.w3.org/2000/svg"', "");
+  if (/<(?:script|link|img|iframe|source)\b[^>]+(?:src|href)=["']https?:\/\//i.test(htmlWithoutSvgNamespace) || /@import\s+(?:url\()?['"]?https?:\/\//i.test(htmlWithoutSvgNamespace)) {
     throw new Error("Single-file build unexpectedly contains a network URL");
   }
 
@@ -61,10 +77,17 @@ try {
     resolve(root, "release/包装刀模生成器.html"),
     resolve(root, "docs/index.html"),
   ];
-  await Promise.all(outputs.map(async (output) => {
+  for (const output of outputs) {
     await mkdir(dirname(output), { recursive: true });
-    await writeFile(output, html);
-  }));
+    const temporaryOutput = `${output}.codex-tmp`;
+    await rm(temporaryOutput, { force: true });
+    try {
+      await writeFile(temporaryOutput, html);
+      await copyBuildOutput(temporaryOutput, output);
+    } finally {
+      await rm(temporaryOutput, { force: true });
+    }
+  }
   console.log(outputs.join("\n"));
 } finally {
   await rm(tempDir, { recursive: true, force: true });

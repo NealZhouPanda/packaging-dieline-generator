@@ -45,6 +45,9 @@
     ["展开高", "Blank height"],
     ["下载 SVG", "Download SVG"],
     ["下载 PDF", "Download PDF"],
+    ["保存当前视角图片", "Save current view as image"],
+    ["正在生成高清图片…", "Rendering high-resolution image…"],
+    ["保存失败，请重试", "Export failed; retry"],
     ["刀模预览", "Dieline preview"],
     ["二维刀模图", "2D dieline"],
     ["刀模文件名（可改，下载时自动加 .svg / .pdf）", "Dieline filename (editable; .svg / .pdf added on download)"],
@@ -89,6 +92,8 @@
     if (m) return `${leading}Side sum ${m[1]} cm${trailing}`;
     m = text.match(/^刀模展开(.+)×(.+)mm，超过材料幅面 (.+)×(.+)mm：一张纸印不下，需与供应商确认分张或拼接方案。$/);
     if (m) return `${leading}Dieline ${m[1]} × ${m[2]} mm exceeds the ${m[3]} × ${m[4]} mm sheet: confirm splitting or splicing with the supplier.${trailing}`;
+    m = text.match(/^已保存 (\d+)×(\d+) PNG$/);
+    if (m) return `${leading}Saved ${m[1]} × ${m[2]} PNG${trailing}`;
     m = text.match(/^宽 W 必须比长 L 小 2mm 以上：(.+)$/);
     if (m) return `${leading}Width W must be at least 2 mm smaller than length L: ${m[1]}${trailing}`;
     m = text.match(/^(.+)超出已验证范围（(.+)–(.+) mm），该尺寸尚未校准，不能生成刀模$/);
