@@ -6,6 +6,7 @@ import {
   arcPointsForCanvas,
   artworkCanvasSizeFor,
   canvasTransformFor,
+  layerAtPoint,
   OFFICIAL_ARTWORK_FALLBACK_SIZE,
   OFFICIAL_ARTWORK_MAX_SIZE,
 } from "../src/texture-editor.js";
@@ -22,6 +23,30 @@ import {
 } from "../src/three-preview.js";
 
 describe("0201 texture and 3D topology", () => {
+  it("converts pointer coordinates back into dieline coordinates", () => {
+    const transform = canvasTransformFor(
+      { minX: -20, minY: 10, maxX: 980, maxY: 510 },
+      1600,
+      900,
+    );
+    const canvasPoint = transform.point(350, 225);
+
+    const netPoint = transform.unpoint(...canvasPoint);
+    expect(netPoint[0]).toBeCloseTo(350, 10);
+    expect(netPoint[1]).toBeCloseTo(225, 10);
+  });
+
+  it("selects the topmost artwork layer under the pointer", () => {
+    const layers = [
+      { id: 1, x: 0, y: 0, width: 100, height: 100 },
+      { id: 2, x: 20, y: 20, width: 100, height: 100 },
+    ];
+
+    expect(layerAtPoint(layers, 30, 30)?.id).toBe(2);
+    expect(layerAtPoint(layers, 10, 10)?.id).toBe(1);
+    expect(layerAtPoint(layers, 130, 130)).toBeNull();
+  });
+
   it("reuses the generated body panel coordinates", () => {
     const geometry = generate0201({
       boxType: "0201",

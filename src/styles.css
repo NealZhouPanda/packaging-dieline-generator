@@ -133,13 +133,16 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px r
 .primary-small:hover { background: var(--accent-dark); }
 .texture-layout { height: calc(100% - 42px); min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 12px; }
 .texture-canvas-wrap { min-width: 0; min-height: 0; display: grid; place-items: center; overflow: auto; padding: 16px; border: 1px solid #d8dcdf; background-color: white; background-image: linear-gradient(45deg, #f1f2f3 25%, transparent 25%), linear-gradient(-45deg, #f1f2f3 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f1f2f3 75%), linear-gradient(-45deg, transparent 75%, #f1f2f3 75%); background-position: 0 0, 0 8px, 8px -8px, -8px 0; background-size: 16px 16px; }
-#textureCanvas { display: block; width: min(100%, 1100px); height: auto; border: 0; box-shadow: none; }
+#textureCanvas { display: block; width: min(100%, 1100px); height: auto; border: 0; box-shadow: none; cursor: grab; touch-action: none; outline: none; }
+#textureCanvas.is-dragging { cursor: grabbing; }
+#textureCanvas:focus-visible { box-shadow: 0 0 0 2px rgba(20, 124, 101, .3); }
 .texture-layers { min-height: 0; overflow: auto; padding: 12px; border: 1px solid #d8dcdf; background: white; }
 .texture-layers > strong { padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 .texture-layers p { margin: 14px 0 0; }
 .texture-empty { margin: 18px 0; color: #9aa2a9; font-size: 11px; text-align: center; }
 .is-error { color: #a92727 !important; }
-.texture-layer { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid #edf0f1; }
+.texture-layer { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 6px; border-bottom: 1px solid #edf0f1; cursor: pointer; }
+.texture-layer.is-active { background: #eef5f2; box-shadow: inset 2px 0 var(--accent); }
 .texture-layer span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #4e5963; font-size: 11px; }
 .texture-layer-remove { flex: none; border: 0; background: transparent; color: #b44747; font-size: 10px; cursor: pointer; }
 .texture-status-error { color: #a92727 !important; }
