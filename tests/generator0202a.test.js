@@ -94,7 +94,7 @@ describe("0202A geometry", () => {
 
   it("accepts every corner of the verified envelope", () => {
     for (const length of [50, 2000])
-      for (const width of [120, 1200])
+      for (const width of [50, 1200])
         for (const depth of [50, 1500])
           for (const caliper of [1.5, 5]) {
             expect(() => generate0202A({ length, width, depth, caliper })).not.toThrow();

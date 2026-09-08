@@ -20,7 +20,7 @@ function K(name, value) {
 function dA({ length, width, depth, caliper }) {
   const ranges = {
     length: [50, 2000],
-    width: [120, 1200],
+    width: [50, 1200],
     depth: [50, 1500],
     caliper: [0.4, 5],
   };
@@ -37,7 +37,7 @@ const E005C_SMALL={"base":{"length":300.0,"width":200.0,"depth":50.0,"caliper":3
 
 function validateLegacyParameters(parameters, { whiteCard = false } = {}) {
   const paperType = parameters.paperType || "corrugated";
-  const caliperRange = whiteCard && paperType === "white-card" ? [0.4, 0.8] : [1.5, 5];
+  const caliperRange = whiteCard && paperType === "white-card" ? [0.4, 1] : [1.5, 5];
   dA(parameters);
   if (parameters.caliper < caliperRange[0] || parameters.caliper > caliperRange[1]) {
     throw new RangeError(

@@ -47,14 +47,14 @@ export function generate0421({ length, width, depth, caliper, paperType = "corru
   validate("width", width);
   validate("depth", depth);
   validate("caliper", caliper);
-  if (length < 50 || length > 2000 || width < 120 || width > 1200 || depth < 50 || depth > 1500) {
+  if (length < 50 || length > 2000 || width < 50 || width > 1200 || depth < 50 || depth > 1500) {
     throw new RangeError("0421 dimensions are outside the verified operating range");
   }
-  const caliperRange = paperType === "white-card" ? [0.4, 0.8] : [1.5, 5];
+  const caliperRange = paperType === "white-card" ? [0.4, 1] : [1.5, 5];
   if (caliper < caliperRange[0] || caliper > caliperRange[1]) {
     throw new RangeError(
       paperType === "white-card"
-        ? "0421 white-card caliper must be between 0.4 and 0.8 mm"
+        ? "0421 white-card caliper must be between 0.4 and 1.0 mm"
         : "0421 caliper must be between 1.5 and 5 mm",
     );
   }

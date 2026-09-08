@@ -162,12 +162,12 @@ function flapRectFromHinge(hinge, cutLines, direction) {
 // rectangles. They do not have a separate fold-line element, but they are
 // still real dieline faces and must be present in both the flat and folded
 // previews.
-function flapRectsFromOuterCuts(cutLines, panels, bodyTop, bodyBottom, direction) {
+function flapRectsFromOuterCuts(cutLines, panels, bodyTop, bodyBottom, direction, minimumSpan) {
   return cutLines
     .filter(
       (line) =>
         isHorizontal(line) &&
-        lineLength(line) > 50 &&
+        lineLength(line) >= minimumSpan &&
         (direction < 0 ? line.y1 < bodyTop - EPSILON : line.y1 > bodyBottom + EPSILON),
     )
     .sort((a, b) => Math.min(a.x1, a.x2) - Math.min(b.x1, b.x2))
@@ -207,7 +207,7 @@ function panelHingeY(foldLines, panel, bodyTop, bodyBottom, direction) {
     .filter(
       (line) =>
         isHorizontal(line) &&
-        lineLength(line) > 50 &&
+        lineLength(line) >= Math.max(EPSILON, (panel.x2 - panel.x1) * 0.8) &&
         Math.min(line.x1, line.x2) <= panel.x2 + EPSILON &&
         Math.max(line.x1, line.x2) >= panel.x1 - EPSILON &&
         (direction < 0 ? line.y1 <= bodyTop + EPSILON : line.y1 >= bodyBottom - EPSILON),
@@ -448,10 +448,17 @@ export function create0201Topology(geometry) {
   const foldLines = allLines.filter(({ type }) => type === 1);
   const cutLines = allLines.filter(({ type }) => type === 0);
   const polylines = geometry.elements.map(polylineCoordinates).filter(Boolean);
+  const minimumPanelSpan = Math.max(
+    EPSILON,
+    Math.min(Number(geometry.parameters?.length) || 0, Number(geometry.parameters?.width) || 0) * 0.8,
+  );
 
   const bodyHorizontalYs = uniqueSorted(
     foldLines
-      .filter(({ y1, y2, x1, x2 }) => isNearly(y1, y2) && y1 >= -EPSILON && Math.abs(x2 - x1) > 50)
+      // A 50 mm side panel contributes an exactly 50 mm body crease. Keep it
+      // in the candidate set; the old strict >50 check discarded the top
+      // body level and made the minimum-width 3D topology impossible to build.
+      .filter(({ y1, y2, x1, x2 }) => isNearly(y1, y2) && y1 >= -EPSILON && Math.abs(x2 - x1) >= minimumPanelSpan)
       .map(({ y1 }) => y1),
   );
   if (bodyHorizontalYs.length < 2) {
@@ -499,7 +506,7 @@ export function create0201Topology(geometry) {
           isHorizontal(line) &&
           Math.min(line.x1, line.x2) < panel.x2 - EPSILON &&
           Math.max(line.x1, line.x2) > panel.x1 + EPSILON &&
-          lineLength(line) > 50,
+          lineLength(line) >= Math.max(EPSILON, (panel.x2 - panel.x1) * 0.8),
       )
       .map((line) => line.y1);
     panel.y1 = Math.min(...horizontalScores);
@@ -519,10 +526,10 @@ export function create0201Topology(geometry) {
   );
 
   const topHinges = foldLines
-    .filter(({ x1, x2, y1, y2 }) => isHorizontal({ x1, x2, y1, y2 }) && y1 < bodyTop - EPSILON && lineLength({ x1, x2, y1, y2 }) > 50)
+    .filter(({ x1, x2, y1, y2 }) => isHorizontal({ x1, x2, y1, y2 }) && y1 < bodyTop - EPSILON && lineLength({ x1, x2, y1, y2 }) >= minimumPanelSpan)
     .sort((a, b) => a.x1 - b.x1);
   const bottomHinges = foldLines
-    .filter(({ x1, x2, y1, y2 }) => isHorizontal({ x1, x2, y1, y2 }) && y1 > bodyBottom + EPSILON && lineLength({ x1, x2, y1, y2 }) > 50)
+    .filter(({ x1, x2, y1, y2 }) => isHorizontal({ x1, x2, y1, y2 }) && y1 > bodyBottom + EPSILON && lineLength({ x1, x2, y1, y2 }) >= minimumPanelSpan)
     .sort((a, b) => a.x1 - b.x1);
   if (topHinges.length < 2 || bottomHinges.length < 2) {
     throw new RangeError("0201 topology could not identify the flap hinge lines");
@@ -535,8 +542,8 @@ export function create0201Topology(geometry) {
     panelIndex: panels.findIndex((panel) => (hinge.x1 + hinge.x2) / 2 > panel.x1 && (hinge.x1 + hinge.x2) / 2 < panel.x2),
     rect: flapRectFromHinge(hinge, cutLines, 1),
   }));
-  const cutTopFlaps = flapRectsFromOuterCuts(cutLines, panels, bodyTop, bodyBottom, -1);
-  const cutBottomFlaps = flapRectsFromOuterCuts(cutLines, panels, bodyTop, bodyBottom, 1);
+  const cutTopFlaps = flapRectsFromOuterCuts(cutLines, panels, bodyTop, bodyBottom, -1, minimumPanelSpan);
+  const cutBottomFlaps = flapRectsFromOuterCuts(cutLines, panels, bodyTop, bodyBottom, 1, minimumPanelSpan);
   // The outer cut rectangles are the authoritative list: it includes both
   // major flaps (which also have explicit hinge lines) and minor flaps (which
   // only have cut lines). Fall back to the hinge-derived pair only for an

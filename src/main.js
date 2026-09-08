@@ -7,6 +7,7 @@ import { blanksPerSheet, containerLoadCount, netArea, PRACTICAL_LOAD_FACTOR, sid
 import { detectFace, remapDimensions } from "./orientation.js";
 import { geometryToPdf, exportFilename, stripExportExt } from "./pdf.js";
 import { geometryToSvg } from "./svg.js";
+import { whiteCardCalipersFor } from "./material-options.js";
 import { TextureEditor } from "./texture-editor.js";
 import { ThreePreview } from "./three-preview.js";
 
@@ -149,14 +150,17 @@ function syncMaterialControls() {
   if (!fluteSelect || !paperTypeSelect) return;
 
   const isWhiteCard = paperTypeSelect.value === "white-card";
-  if (isWhiteCard && materialMode !== "white-card") {
-    corrugatedFluteValue = fluteSelect.value;
-    fluteSelect.innerHTML = `
-      <option value="0.4">0.4</option>
-      <option value="0.5">0.5</option>
-      <option value="0.6">0.6</option>
-      <option value="0.8">0.8</option>`;
-    fluteSelect.value = whiteCardCaliperValue;
+  if (isWhiteCard) {
+    if (materialMode !== "white-card") corrugatedFluteValue = fluteSelect.value;
+    const allowedCalipers = whiteCardCalipersFor(boxTypeSelect?.value);
+    const selectedCaliper = allowedCalipers.includes(Number(whiteCardCaliperValue))
+      ? Number(whiteCardCaliperValue)
+      : 0.5;
+    fluteSelect.innerHTML = allowedCalipers
+      .map((caliper) => `<option value="${caliper}">${caliper.toFixed(1)}</option>`)
+      .join("");
+    fluteSelect.value = String(selectedCaliper);
+    whiteCardCaliperValue = fluteSelect.value;
   } else if (!isWhiteCard && materialMode !== "corrugated") {
     whiteCardCaliperValue = fluteSelect.value;
     fluteSelect.innerHTML = corrugatedFluteOptions;
