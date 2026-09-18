@@ -1,5 +1,7 @@
 # 包装刀模生成器
 
+[English](README.en.md) | 中文
+
 一个可离线运行的包装刀模生成器：输入箱体尺寸和纸厚，在浏览器本地计算刀模，导出 1:1 mm SVG 或带信息栏的 PDF。发布文件是单个 HTML，双击即可使用，不需要安装运行环境，也不会上传尺寸数据。
 
 在线试用：<https://nealzhoupanda.github.io/packaging-dieline-generator/>
