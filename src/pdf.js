@@ -4,6 +4,8 @@ import { dielineSize, sideSumCm, volumetricWeightKg } from "./netarea.js";
 import { dedupeFoldLines, pointBounds } from "./svg.js";
 
 const MM_TO_PT = 72 / 25.4;
+// 写进内容流的缩放系数：若按 3 位小数写成 2.835，整张图纸会比真正的 1:1 大 0.0125%（每米约 0.125mm）。
+const STREAM_MM_TO_PT = Number(MM_TO_PT.toFixed(6));
 const PROOF_NOTE = "注意：首次投产前先打样核对。";
 
 function makeLayout(blankW) {
@@ -114,17 +116,25 @@ function hexGids(text, gids) {
   return `<${hex}>`;
 }
 
-function arcToCubic(cx, cy, r, startDeg, endDeg) {
+function arcToCubics(cx, cy, r, startDeg, endDeg) {
   const span = (((endDeg - startDeg) % 360) + 360) % 360;
   // 与 SVG 一致：源角度按 Y 向上的数学坐标系定义，PDF 刀模坐标稍后再整体翻转。
   const start = (-endDeg * Math.PI) / 180;
-  const theta = (span * Math.PI) / 180;
+  // 一段三次贝塞尔只在 ≤90° 时足够贴近真圆；半圆用一段会偏离真圆约半径的 1.8%（r=10mm 时 0.18mm）。
+  const segments = Math.max(1, Math.ceil(span / 90 - 1e-9));
+  const theta = (span * Math.PI) / 180 / segments;
   const k = (4 / 3) * Math.tan(theta / 4);
-  const p1 = [cx + r * Math.cos(start), cy + r * Math.sin(start)];
-  const p2 = [cx + r * Math.cos(start + theta), cy + r * Math.sin(start + theta)];
-  const c1 = [p1[0] - k * r * Math.sin(start), p1[1] + k * r * Math.cos(start)];
-  const c2 = [p2[0] + k * r * Math.sin(start + theta), p2[1] - k * r * Math.cos(start + theta)];
-  return { p1, c1, c2, p2 };
+  const cubics = [];
+  for (let index = 0; index < segments; index += 1) {
+    const from = start + theta * index;
+    const to = from + theta;
+    const p1 = [cx + r * Math.cos(from), cy + r * Math.sin(from)];
+    const p2 = [cx + r * Math.cos(to), cy + r * Math.sin(to)];
+    const c1 = [p1[0] - k * r * Math.sin(from), p1[1] + k * r * Math.cos(from)];
+    const c2 = [p2[0] + k * r * Math.sin(to), p2[1] - k * r * Math.cos(to)];
+    cubics.push({ p1, c1, c2, p2 });
+  }
+  return cubics;
 }
 
 /** 主区刀模路径（mm 坐标系，x 右移 SIDEBAR，y 翻转仅作用于刀模）。 */
@@ -134,7 +144,7 @@ function dielineStream(geometry, lay) {
   const drawn = dedupeFoldLines(elements);
   const parts = [];
   parts.push(
-    `q ${round(MM_TO_PT)} 0 0 ${round(-MM_TO_PT)} ${round((lay.sidebar + lay.gap - bounds.minX) * MM_TO_PT)} ${round((lay.margin + bounds.maxY) * MM_TO_PT)} cm`,
+    `q ${STREAM_MM_TO_PT} 0 0 -${STREAM_MM_TO_PT} ${round((lay.sidebar + lay.gap - bounds.minX) * MM_TO_PT)} ${round((lay.margin + bounds.maxY) * MM_TO_PT)} cm`,
   );
   parts.push("0.25 w 1 J 1 j");
   let currentKind = null;
@@ -149,9 +159,16 @@ function dielineStream(geometry, lay) {
       parts.push(`${round(x1)} ${round(y1)} m ${round(x2)} ${round(y2)} l S`);
     } else if (element[0] === 1) {
       const [, , cx, cy, r, start, end] = element;
-      const { p1, c1, c2, p2 } = arcToCubic(cx, cy, r, start, end);
+      const cubics = arcToCubics(cx, cy, r, start, end);
+      const [first, ...rest] = cubics;
+      const continued = rest
+        .map(
+          ({ c1, c2, p2 }) =>
+            ` ${round(c1[0])} ${round(c1[1])} ${round(c2[0])} ${round(c2[1])} ${round(p2[0])} ${round(p2[1])} c`,
+        )
+        .join("");
       parts.push(
-        `${round(p1[0])} ${round(p1[1])} m ${round(c1[0])} ${round(c1[1])} ${round(c2[0])} ${round(c2[1])} ${round(p2[0])} ${round(p2[1])} c S`,
+        `${round(first.p1[0])} ${round(first.p1[1])} m ${round(first.c1[0])} ${round(first.c1[1])} ${round(first.c2[0])} ${round(first.c2[1])} ${round(first.p2[0])} ${round(first.p2[1])} c${continued} S`,
       );
     } else if (element[0] === 2) {
       if (element.length < 6 || element.length % 2 !== 0) {
