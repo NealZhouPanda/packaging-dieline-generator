@@ -198,32 +198,34 @@ function hairline(yFromTopMm, pageHeightMm, lay) {
   ].join("\n");
 }
 
-function sidebarText({ filename, date, parameters, overLimit, ratio, sideSum, pageHeightMm, lay }) {
+/**
+ * 侧栏内容排版：只做 y 推进与内容收集，不依赖页高。
+ * 两遍布局的第一遍：先算出内容总高，供 geometryToPdf 决定页高。
+ */
+function sidebarFlow({ filename, date, parameters, overLimit, ratio, sideSum, lay }) {
   const { caliper, paperType = "corrugated" } = parameters;
   const paperLabel = paperType === "white-card" ? "白卡纸" : "瓦楞纸板";
   const die = dielineSize(parameters);
   const contentW = lay.sidebar - lay.left * 2;
   const nameLines = wrapByWidth(stripExportExt(filename), lay.titlePt, contentW);
   const noteLines = wrapByWidth("首次投产前先打样核对", lay.valuePt, contentW);
-  const parts = [];
+  const ops = [];
+  const rules = [];
 
-  parts.push("1 1 1 rg");
-  parts.push(textLine(lay.left, lay.header * 0.68, pageHeightMm, lay.titlePt, "包装刀模图纸"));
+  ops.push({ color: "1 1 1", x: lay.left, y: lay.header * 0.68, size: lay.titlePt, text: "包装刀模图纸" });
 
   let y = lay.header + lay.lineMm;
   const label = (text) => {
-    parts.push("0.35 0.38 0.4 rg");
-    parts.push(textLine(lay.left, y, pageHeightMm, lay.labelPt, text));
+    ops.push({ color: "0.35 0.38 0.4", x: lay.left, y, size: lay.labelPt, text });
     y += lay.labelStep;
   };
   const value = (text, size = lay.valuePt) => {
-    parts.push("0 0 0 rg");
-    parts.push(textLine(lay.left, y, pageHeightMm, size, text));
+    ops.push({ color: "0 0 0", x: lay.left, y, size, text });
     y += lay.lineMm;
   };
   const divider = () => {
     y += lay.blockGap * 0.35;
-    parts.push(hairline(y, pageHeightMm, lay));
+    rules.push(y);
     y += lay.blockGap * 0.75;
   };
 
@@ -258,6 +260,17 @@ function sidebarText({ filename, date, parameters, overLimit, ratio, sideSum, pa
 
   label("注意");
   for (const line of noteLines) value(line);
+  return { ops, rules, endY: y };
+}
+
+/** 第二遍：按最终页高把排版结果转成内容流。 */
+function renderSidebar(flow, pageHeightMm, lay) {
+  const parts = [];
+  for (const op of flow.ops) {
+    parts.push(`${op.color} rg`);
+    parts.push(textLine(op.x, op.y, pageHeightMm, op.size, op.text));
+  }
+  for (const ruleY of flow.rules) parts.push(hairline(ruleY, pageHeightMm, lay));
   return parts.join("\n");
 }
 
@@ -279,24 +292,20 @@ export function geometryToPdf(geometry, { filename = "dieline", date, ratio = 80
   const blankH = bounds.maxY - bounds.minY;
   const lay = makeLayout(blankW);
   const pageW = lay.sidebar + lay.gap + blankW + lay.margin;
-  const pageH = blankH + 2 * lay.margin;
   const sideSum = sideSumCm(parameters);
   const overLimit = sideSum > sideLimit;
   const today = date ?? new Date().toLocaleDateString("sv-SE");
 
+  // 页高取两者较大者：刀模区所需高度，或侧栏内容排到底所需高度（留一行下降部+页边距）。
+  const flow = sidebarFlow({ filename, date: today, parameters, overLimit, ratio, sideSum, lay });
+  const descentPadMm = lay.valuePt * 0.35 * (25.4 / 72);
+  const sidebarNeededH = flow.endY - lay.lineMm + descentPadMm + lay.margin;
+  const pageH = Math.max(blankH + 2 * lay.margin, sidebarNeededH);
+
   const content = [
     sidebarBackground(pageH, lay),
     dielineStream(geometry, lay),
-    sidebarText({
-      filename,
-      date: today,
-      parameters,
-      overLimit,
-      ratio,
-      sideSum,
-      pageHeightMm: pageH,
-      lay,
-    }),
+    renderSidebar(flow, pageH, lay),
   ].join("\n");
 
   const fontBytes = Uint8Array.from(atob(PDF_FONT.base64), (c) => c.charCodeAt(0));
