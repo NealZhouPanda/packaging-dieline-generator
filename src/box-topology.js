@@ -1,4 +1,5 @@
 import { create0201Topology } from "./topology0201.js";
+import { create0206Topology } from "./topology0206.js";
 import { create0421Topology } from "./topology0421.js";
 import { createE005CTopology } from "./topologyE005C.js";
 import { createK016ATopology } from "./topologyK016A.js";
@@ -6,6 +7,7 @@ import { createC001GXTopology } from "./topologyC001GX.js";
 
 const TOPOLOGY_BUILDERS = Object.freeze({
   "0201": create0201Topology,
+  "0206": create0206Topology,
   "0421": create0421Topology,
   E005C: createE005CTopology,
   K016A: createK016ATopology,

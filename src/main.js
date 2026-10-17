@@ -1,4 +1,5 @@
 import { generate0202A } from "./generator0202a.js";
+import { generate0206 } from "./generator0206.js";
 import { generate0421 } from "./generator0421.js";
 import { generateK016A } from "./generatorK016A.js";
 import { generate0201, generateC001GX, generateE005C } from "./generators-legacy.js";
@@ -20,6 +21,7 @@ const boxTypeSelect = document.querySelector("#boxType");
 const paperTypeSelect = document.querySelector("#paperType");
 const generators = Object.freeze({
   "0201": generate0201,
+  "0206": generate0206,
   "0202A": generate0202A,
   "0421": generate0421,
   K016A: generateK016A,
@@ -345,6 +347,7 @@ sideSumLimitInput.addEventListener("input", update);
 containerTypeSelect?.addEventListener("change", update);
 const boxDefaults = Object.freeze({
   "0201": { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 5 },
+  "0206": { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 3 },
   "0421": { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 5 },
   K016A: { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 3 },
   E005C: { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 3 },
