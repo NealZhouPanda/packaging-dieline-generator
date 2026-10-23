@@ -64,7 +64,7 @@ npm run dev
 
 ## 许可证
 
-本项目代码采用 MIT License，见仓库根目录 `LICENSE`。内嵌的 Noto Sans SC 字体子集按 SIL Open Font License 1.1 发布，见 `LICENSES/OFL-1.1.txt`。
+本项目由 Neal Zhou（[NealZhouPanda](https://github.com/NealZhouPanda)）与 [CLKEVIN1945](https://github.com/CLKEVIN1945) 共同开发维护。本项目代码采用 MIT License，见仓库根目录 `LICENSE`。内嵌的 Noto Sans SC 字体子集按 SIL Open Font License 1.1 发布，见 `LICENSES/OFL-1.1.txt`。
 
 ## 目录
 
@@ -148,7 +148,7 @@ npm run dev
 
 ## License
 
-The project code is released under the MIT License — see `LICENSE` at the repository root. The embedded Noto Sans SC font subset is published under the SIL Open Font License 1.1 — see `LICENSES/OFL-1.1.txt`.
+Developed and maintained by Neal Zhou ([NealZhouPanda](https://github.com/NealZhouPanda)) and [CLKEVIN1945](https://github.com/CLKEVIN1945). The project code is released under the MIT License — see `LICENSE` at the repository root. The embedded Noto Sans SC font subset is published under the SIL Open Font License 1.1 — see `LICENSES/OFL-1.1.txt`.
 
 ## Layout
 

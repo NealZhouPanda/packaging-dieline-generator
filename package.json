@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": false,
   "type": "module",
+  "author": "Neal Zhou",
+  "contributors": [
+    "CLKEVIN1945 (https://github.com/CLKEVIN1945)"
+  ],
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",

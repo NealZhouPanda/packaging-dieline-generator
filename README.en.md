@@ -64,7 +64,7 @@ npm run dev
 
 ## License
 
-The project code is released under the MIT License — see `LICENSE` at the repository root. The embedded Noto Sans SC font subset is published under the SIL Open Font License 1.1 — see `LICENSES/OFL-1.1.txt`.
+Developed and maintained by Neal Zhou ([NealZhouPanda](https://github.com/NealZhouPanda)) and [CLKEVIN1945](https://github.com/CLKEVIN1945). The project code is released under the MIT License — see `LICENSE` at the repository root. The embedded Noto Sans SC font subset is published under the SIL Open Font License 1.1 — see `LICENSES/OFL-1.1.txt`.
 
 ## Layout
 
