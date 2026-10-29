@@ -1,5 +1,6 @@
 import { generate0202A } from "./generator0202a.js";
 import { generate0206 } from "./generator0206.js";
+import { generateT004C } from "./generatorT004C.js";
 import { generate0421 } from "./generator0421.js";
 import { generateK016A } from "./generatorK016A.js";
 import { generate0201, generateC001GX, generateE005C } from "./generators-legacy.js";
@@ -22,6 +23,7 @@ const paperTypeSelect = document.querySelector("#paperType");
 const generators = Object.freeze({
   "0201": generate0201,
   "0206": generate0206,
+  T004C: generateT004C,
   "0202A": generate0202A,
   "0421": generate0421,
   K016A: generateK016A,
@@ -51,6 +53,8 @@ const customCaliperRow = document.querySelector("#customCaliperRow");
 const customCaliperInput = document.querySelector("#caliper");
 const c001gxTongueStyleRow = document.querySelector("#c001gxTongueStyleRow");
 const c001gxTongueStyleSelect = document.querySelector("#c001gxTongueStyle");
+const t004cTongueStyleRow = document.querySelector("#t004cTongueStyleRow");
+const t004cTongueStyleSelect = document.querySelector("#t004cTongueStyle");
 const preview = document.querySelector("#preview");
 const error = document.querySelector("#error");
 const downloadButton = document.querySelector("#download");
@@ -187,12 +191,14 @@ function values() {
   dimensions.boxType = boxTypeSelect.value;
   dimensions.paperType = paperTypeSelect?.value || "corrugated";
   dimensions.c001gxTongueStyle = Number(c001gxTongueStyleSelect?.value || 2);
+  dimensions.t004cTongueStyle = Number(t004cTongueStyleSelect?.value || 2);
+  if (t004cTongueStyleRow) t004cTongueStyleRow.hidden = dimensions.boxType !== "T004C";
   if (c001gxTongueStyleRow) c001gxTongueStyleRow.hidden = dimensions.boxType !== "C001GX";
   return dimensions;
 }
 
 function makeFilename(parameters) {
-  const style = parameters.boxType === "C001GX" ? `_S${parameters.c001gxTongueStyle || 2}` : "";
+  const style = parameters.boxType === "C001GX" ? `_S${parameters.c001gxTongueStyle || 2}` : parameters.boxType === "T004C" ? `_S${parameters.t004cTongueStyle || 2}` : "";
   return `${parameters.boxType || "0201"}_L${parameters.length}_W${parameters.width}_D${parameters.depth}_C${parameters.caliper}${style}`;
 }
 
@@ -218,6 +224,7 @@ function refreshFaceData(current) {
         caliper: current.caliper,
         boxType: current.boxType,
         paperType: current.paperType,
+        t004cTongueStyle: current.t004cTongueStyle,
       });
       const area = supportsNetArea(current.boxType)
         ? netArea(geometry.elements)
@@ -348,6 +355,7 @@ containerTypeSelect?.addEventListener("change", update);
 const boxDefaults = Object.freeze({
   "0201": { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 5 },
   "0206": { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 3 },
+  T004C: { length: 120, width: 100, depth: 200, paperType: "white-card", caliper: 0.5 },
   "0421": { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 5 },
   K016A: { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 3 },
   E005C: { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 3 },
@@ -362,6 +370,7 @@ function applyBoxDefaults(boxType) {
   syncMaterialControls();
   fluteSelect.value = String(defaults.caliper);
   if (c001gxTongueStyleRow) c001gxTongueStyleRow.hidden = boxType !== "C001GX";
+  if (t004cTongueStyleRow) t004cTongueStyleRow.hidden = boxType !== "T004C";
   userEditedFilename = false;
 }
 
@@ -374,6 +383,10 @@ paperTypeSelect?.addEventListener("change", () => {
   update();
 });
 c001gxTongueStyleSelect?.addEventListener("change", () => {
+  userEditedFilename = false;
+  update();
+});
+t004cTongueStyleSelect?.addEventListener("change", () => {
   userEditedFilename = false;
   update();
 });
