@@ -101,6 +101,25 @@ describe("PDF 打样提醒须完整位于页内（真实 PDF 解析）", () => {
     expect(items.some((item) => item.str.includes("已超抛"))).toBe(true);
   });
 
+  it("阈值清空/为 0 时，PDF 与界面一致按未超抛标注", async () => {
+    const geometry = generate0201({ length: 350, width: 190, depth: 230, caliper: 5 });
+    for (const sideLimit of [0, "", Number.NaN]) {
+      const bytes = geometryToPdf(geometry, { filename: "阈值空", date: "2026-11-07", ratio: 8000, sideLimit });
+      const { items } = await extractText(bytes);
+      const line = items.map((item) => item.str).join("|");
+      expect(line, `sideLimit=${String(sideLimit)} 不应标已超抛`).not.toContain("已超抛");
+      expect(line, `sideLimit=${String(sideLimit)} 应标未超抛`).toContain("未超抛");
+    }
+  });
+
+  it("阈值有效且三边和超出时，PDF 标已超抛", async () => {
+    const geometry = generate0201({ length: 350, width: 190, depth: 230, caliper: 5 });
+    const bytes = geometryToPdf(geometry, { filename: "阈值60", date: "2026-11-07", ratio: 8000, sideLimit: 60 });
+    const { items } = await extractText(bytes);
+    const line = items.map((item) => item.str).join("|");
+    expect(line).toContain("已超抛");
+  });
+
   it("5 种真实盒型：提醒完整文本在页内", async () => {
     const cases = [
       ["0201", generate0201, { length: 350, width: 190, depth: 230, caliper: 5 }],

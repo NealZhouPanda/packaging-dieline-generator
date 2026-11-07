@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { generate0202A } from "../src/generator0202a.js";
 import { generate0421 } from "../src/generator0421.js";
 import { generateK016A } from "../src/generatorK016A.js";
-import { blanksPerSheet, containerLoadCount, dieSize, dielineSize, netArea, outerSize, outerSizeFromDieline, practicalLoadCount, sideHeights, sideSumCm, supportsNetArea, volumetricWeightKg } from "../src/netarea.js";
+import { blanksPerSheet, containerLoadCount, dielineSize, exceedsSideLimit, netArea, outerSizeFromDieline, PRACTICAL_LOAD_FACTOR, sideHeights, sideSumCm, supportsNetArea, volumetricWeightKg } from "../src/netarea.js";
 
 describe("净面积", () => {
   it("默认尺寸：轮廓闭合，净面积稳定（结构差异在 1% 以内）", () => {
@@ -50,12 +50,6 @@ describe("刀模尺寸", () => {
   it("输入刀模尺寸时，导出尺寸保持输入值", () => {
     expect(dielineSize(p)).toEqual({ length: 390, width: 130, depth: 640 });
   });
-  it("保留历史 dieSize 换算函数的兼容性", () => {
-    expect(dieSize(p)).toEqual({ length: 392.5, width: 132.5, depth: 642.5 });
-  });
-  it("默认盒型按刀模尺寸估算外尺寸", () => {
-    expect(outerSize(p)).toEqual({ length: 400, width: 140, depth: 645 });
-  });
   it("E005C 使用项目现有的刀模到外尺寸抛重换算", () => {
     expect(outerSizeFromDieline({ ...p, boxType: "E005C" })).toEqual({
       length: 393.3333333333333,
@@ -101,12 +95,28 @@ describe("装柜估算", () => {
   });
 
   it("实际估算 = 理论 ×0.88 取整", () => {
-    expect(practicalLoadCount(p, "20GP")).toBe(1689);
-    expect(practicalLoadCount(p, "40HQ")).toBe(3833);
+    expect(Math.floor(containerLoadCount(p, "20GP") * PRACTICAL_LOAD_FACTOR)).toBe(1689);
+    expect(Math.floor(containerLoadCount(p, "40HQ") * PRACTICAL_LOAD_FACTOR)).toBe(3833);
   });
 
   it("未知柜型或单箱超过柜内尺寸返回 0", () => {
     expect(containerLoadCount(p, "XXL")).toBe(0);
     expect(containerLoadCount({ ...p, length: 6000 }, "20GP")).toBe(0);
+  });
+});
+
+describe("过抛阈值判定（界面与 PDF 共用）", () => {
+  it("阈值有效且三边和超出时判超抛", () => {
+    expect(exceedsSideLimit(79, 60)).toBe(true);
+    expect(exceedsSideLimit(79, 100)).toBe(false);
+    expect(exceedsSideLimit(100, 100)).toBe(false);
+  });
+
+  it("阈值清空或为 0 / 负数 / 非数字时视为未开启判定", () => {
+    expect(exceedsSideLimit(79, 0)).toBe(false);
+    expect(exceedsSideLimit(79, "")).toBe(false);
+    expect(exceedsSideLimit(79, -5)).toBe(false);
+    expect(exceedsSideLimit(79, Number.NaN)).toBe(false);
+    expect(exceedsSideLimit(79, undefined)).toBe(false);
   });
 });

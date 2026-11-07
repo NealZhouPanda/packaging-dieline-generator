@@ -1,6 +1,6 @@
 import { PDF_FONT } from "./font-subset.js";
 import { PDF_FONT_WIDTHS } from "./font-widths.js";
-import { dielineSize, sideSumCm, volumetricWeightKg } from "./netarea.js";
+import { dielineSize, exceedsSideLimit, sideSumCm, volumetricWeightKg } from "./netarea.js";
 import { dedupeFoldLines, pointBounds } from "./svg.js";
 
 const MM_TO_PT = 72 / 25.4;
@@ -310,7 +310,7 @@ export function geometryToPdf(geometry, { filename = "dieline", date, ratio = 80
   const lay = makeLayout(blankW);
   const pageW = lay.sidebar + lay.gap + blankW + lay.margin;
   const sideSum = sideSumCm(parameters);
-  const overLimit = sideSum > sideLimit;
+  const overLimit = exceedsSideLimit(sideSum, sideLimit);
   const today = date ?? new Date().toLocaleDateString("sv-SE");
 
   // 页高取两者较大者：刀模区所需高度，或侧栏内容排到底所需高度（留一行下降部+页边距）。
@@ -403,9 +403,14 @@ function toUnicodeStream(gids) {
     const uni = char.codePointAt(0).toString(16).toUpperCase().padStart(4, "0");
     entries.push(`<${code}> <${uni}>`);
   }
-  lines.push(`${entries.length} beginbfchar`);
-  lines.push(...entries);
-  lines.push("endbfchar");
+  // PDF 规范（32000-1 9.10.3）规定单个 beginbfchar 块最多 100 条映射，超出须分块。
+  const MAX_BFCHAR_PER_BLOCK = 100;
+  for (let start = 0; start < entries.length; start += MAX_BFCHAR_PER_BLOCK) {
+    const block = entries.slice(start, start + MAX_BFCHAR_PER_BLOCK);
+    lines.push(`${block.length} beginbfchar`);
+    lines.push(...block);
+    lines.push("endbfchar");
+  }
   lines.push("endcmap", "CMapName currentdict /CMap defineresource pop", "end", "end");
   return lines.join("\n");
 }

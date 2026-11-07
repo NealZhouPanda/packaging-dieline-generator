@@ -119,19 +119,8 @@ export function supportsNetArea(boxType) {
 }
 
 /**
- * 输入值和导出几何统一按刀模尺寸处理。
- * 这个旧函数保留给历史调用，不参与当前 PDF 或抛重计算。
+ * 输入值和导出几何统一按刀模尺寸处理，不做任何内外尺寸换算。
  */
-export function dieSize({ length, width, depth, caliper }) {
-  const half = caliper / 2;
-  return {
-    length: length + half,
-    width: width + half,
-    depth: depth + half,
-  };
-}
-
-/** 返回导出文件使用的刀模尺寸，不做任何内外尺寸换算。 */
 export function dielineSize({ length, width, depth }) {
   return { length, width, depth };
 }
@@ -152,11 +141,6 @@ export function outerSizeFromDieline({ length, width, depth, caliper, boxType })
   };
 }
 
-/** 兼容历史调用名；当前语义是“由刀模尺寸估算外尺寸”。 */
-export function outerSize(parameters) {
-  return outerSizeFromDieline(parameters);
-}
-
 /** 四侧面高度：高位 / 低位，差距 2×纸厚。 */
 export function sideHeights({ depth, caliper }) {
   const dieDepth = depth + caliper / 2;
@@ -168,6 +152,12 @@ export function volumetricWeightKg(parameters, ratio) {
   const outer = outerSizeFromDieline(parameters);
   const cm = [outer.length, outer.width, outer.depth].map((mm) => mm / 10);
   return (cm[0] * cm[1] * cm[2]) / ratio;
+}
+
+/** 三边和是否超过抛重阈值。阈值必须是 >0 的有限数；清空或填 0 视为未开启判定（界面与 PDF 共用一个口径）。 */
+export function exceedsSideLimit(sideSum, sideLimit) {
+  const limit = Number(sideLimit);
+  return Number.isFinite(limit) && limit > 0 && sideSum > limit;
 }
 
 /** 三边和按外尺寸，单位 cm。 */
@@ -192,10 +182,6 @@ export const CONTAINERS = Object.freeze({
 
 /** 实际装柜约为理论满载 ×0.88（规则纸箱装载率系数；柜内角铁、门梁、纸箱鼓胀等间隙修正已含在系数里）。 */
 export const PRACTICAL_LOAD_FACTOR = 0.88;
-
-export function practicalLoadCount(parameters, containerKey) {
-  return Math.floor(containerLoadCount(parameters, containerKey) * PRACTICAL_LOAD_FACTOR);
-}
 
 /**
  * 理论满载箱数：按外尺寸在 6 个朝向下分别 floor 排列，取最大值。

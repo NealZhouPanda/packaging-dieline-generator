@@ -5,7 +5,7 @@ import { generate0421 } from "./generator0421.js";
 import { generateK016A } from "./generatorK016A.js";
 import { generate0201, generateC001GX, generateE005C } from "./generators-legacy.js";
 import { supportsBoxTopology } from "./box-topology.js";
-import { blanksPerSheet, containerLoadCount, netArea, PRACTICAL_LOAD_FACTOR, sideSumCm, supportsNetArea, volumetricWeightKg } from "./netarea.js";
+import { blanksPerSheet, containerLoadCount, exceedsSideLimit, netArea, PRACTICAL_LOAD_FACTOR, sideSumCm, supportsNetArea, volumetricWeightKg } from "./netarea.js";
 import { detectFace, remapDimensions } from "./orientation.js";
 import { geometryToPdf, exportFilename, stripExportExt } from "./pdf.js";
 import { geometryToSvg } from "./svg.js";
@@ -279,7 +279,7 @@ function update() {
     const ratio = Number(dimRatioSelect.value);
     const sideSum = sideSumCm(geometry.parameters);
     const sideLimit = Number(sideSumLimitInput.value);
-    const overLimit = Number.isFinite(sideLimit) && sideLimit > 0 && sideSum > sideLimit;
+    const overLimit = exceedsSideLimit(sideSum, sideLimit);
     // 未超抛时不显示抛重数值（按实际重量计费，抛重无意义）
     document.querySelector("#volWeightResult").hidden = !overLimit;
     if (overLimit) {
