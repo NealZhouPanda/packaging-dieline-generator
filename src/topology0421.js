@@ -1,6 +1,5 @@
 import { pointBounds } from "./svg.js";
-
-const EPSILON = 1e-4;
+import { createTopologyHelpers } from "./topology/helpers.js";
 
 const PHASES = Object.freeze({
   M1: Object.freeze([0, 0, 0, 90]),
@@ -16,89 +15,15 @@ const PHASES = Object.freeze({
   M8: Object.freeze([0, 0, 0, 0, 0, 0, 105, 105, 90.1]),
 });
 
-function lineFrom(element, reverse = false) {
-  if (element?.[0] !== 0) throw new RangeError("0421 拓扑索引与刀模线类型不匹配");
-  const line = { type: 1, x1: element[2], y1: element[3], x2: element[4], y2: element[5] };
-  return reverse
-    ? { type: 1, x1: line.x2, y1: line.y2, x2: line.x1, y2: line.y1 }
-    : line;
-}
-
-function sourceArcPoints(element) {
-  if (element?.[0] !== 1) throw new RangeError("0421 拓扑索引与刀模圆弧类型不匹配");
-  const [, , cx, cy, radius, start, end] = element;
-  const sweep = ((end - start) % 360 + 360) % 360;
-  const startAngle = (-end * Math.PI) / 180;
-  const steps = Math.max(1, Math.ceil(sweep / 22.5));
-  return Array.from({ length: steps + 1 }, (_, index) => {
-    const angle = startAngle + (sweep * Math.PI * index) / (180 * steps);
-    return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)];
-  });
-}
-
-function samePoint(left, right) {
-  return Math.abs(left[0] - right[0]) < EPSILON && Math.abs(left[1] - right[1]) < EPSILON;
-}
-
-function appendPoint(points, point) {
-  if (!points.length || !samePoint(points.at(-1), point)) points.push(point);
-}
-
-function appendLine(points, element, reverse = false) {
-  const line = lineFrom(element, reverse);
-  appendPoint(points, [line.x1, line.y1]);
-  appendPoint(points, [line.x2, line.y2]);
-}
-
-function appendArc(points, element, reverse = false) {
-  const arc = sourceArcPoints(element);
-  if (reverse) arc.reverse();
-  for (const point of arc) appendPoint(points, point);
-}
-
-function polygon(...builders) {
-  const points = [];
-  for (const build of builders) build(points);
-  if (points.length > 1 && samePoint(points[0], points.at(-1))) points.pop();
-  return points;
-}
-
-function pointOnLine([x, y], line) {
-  const dx = line.x2 - line.x1;
-  const dy = line.y2 - line.y1;
-  const length = Math.hypot(dx, dy);
-  if (length < EPSILON) return false;
-  const cross = Math.abs((x - line.x1) * dy - (y - line.y1) * dx) / length;
-  if (cross > EPSILON) return false;
-  const dot = (x - line.x1) * dx + (y - line.y1) * dy;
-  return dot >= -EPSILON && dot <= dx * dx + dy * dy + EPSILON;
-}
-
-function exposedEdges(points, foldLines) {
-  return points.map((point, index) => {
-    const next = points[(index + 1) % points.length];
-    return foldLines.some((line) => pointOnLine(point, line) && pointOnLine(next, line)) ? null : index;
-  }).filter((index) => index !== null);
-}
-
-function cloneClosed(points) {
-  return [...points.map((point) => [...point]), [...points[0]]];
-}
-
-function makePiece({ id, label, points, parentId = null, sourceLine = null, phaseAngles = [0], foldLinesToDraw = [] }, allFoldLines) {
-  const edges = exposedEdges(points, allFoldLines);
-  return {
-    id,
-    label,
-    kind: "panel",
-    netPoints: points,
-    sideNetPoints: cloneClosed(points),
-    exposedEdges: edges,
-    sideExposedEdges: edges,
-    foldLinesToDraw,
-    foldRule: { parentId, sourceLine, phaseAngles },
-  };
-}
+const {
+  lineFrom,
+  appendPoint,
+  appendLine,
+  appendArc,
+  polygon,
+  makePiece,
+  extractFoldLines,
+} = createTopologyHelpers({ boxLabel: "0421", epsilon: 1e-4, arcStepDegrees: 22.5, includeHoles: false });
 
 /**
  * Build the 15 official 0421 Planes from the generator's indexed dieline.
@@ -127,9 +52,7 @@ export function create0421Topology(geometry) {
     S4R: lineFrom(e[32], true),
     M8: lineFrom(e[45], true),
   };
-  const allFoldLines = e
-    .filter((element) => element[0] === 0 && element[1] === 1)
-    .map((element) => lineFrom(element));
+  const allFoldLines = extractFoldLines(e);
 
   const contours = {
     M0: polygon(

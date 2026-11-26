@@ -1,23 +1,7 @@
-import { create0201Topology } from "./topology0201.js";
-import { create0206Topology } from "./topology0206.js";
-import { createT004CTopology } from "./topologyT004C.js";
-import { create0421Topology } from "./topology0421.js";
-import { createE005CTopology } from "./topologyE005C.js";
-import { createK016ATopology } from "./topologyK016A.js";
-import { createC001GXTopology } from "./topologyC001GX.js";
-
-const TOPOLOGY_BUILDERS = Object.freeze({
-  "0201": create0201Topology,
-  "0206": create0206Topology,
-  T004C: createT004CTopology,
-  "0421": create0421Topology,
-  E005C: createE005CTopology,
-  K016A: createK016ATopology,
-  C001GX: createC001GXTopology,
-});
+import { getBoxDefinition } from "./boxes/registry.js";
 
 export function supportsBoxTopology(boxId) {
-  return Object.hasOwn(TOPOLOGY_BUILDERS, String(boxId || ""));
+  return Boolean(getBoxDefinition(boxId)?.createTopology);
 }
 
 export function phaseAngleAt(phaseAngles, progress, maxSteps = phaseAngles?.length || 1) {
@@ -63,7 +47,7 @@ export function validateBoxTopology(topology) {
 
 export function createBoxTopology(geometry) {
   const boxId = geometry?.meta?.boxId || geometry?.parameters?.boxType;
-  const builder = TOPOLOGY_BUILDERS[boxId];
+  const builder = getBoxDefinition(boxId)?.createTopology;
   if (!builder) throw new RangeError(`盒形 ${boxId || "(unknown)"} 尚未接入贴图与 3D 协议`);
   return validateBoxTopology(builder(geometry));
 }

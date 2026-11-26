@@ -1,6 +1,4 @@
-import { pointBounds } from "./svg.js";
-
-const round = (value) => Math.round(value * 1000) / 1000;
+import { buildGeometryMeta, roundMm } from "./geometry/core.js";
 
 /** Packmage 0206, CHOOSE=3 (dieline dimensions), round clearance slots.
  * The long flaps fully overlap. Short flaps are L/2, not W/2.
@@ -19,7 +17,7 @@ export function generate0206({ length, width, depth, caliper, paperType = "corru
   const highLow = 2 * caliper;
   const backHighLow = caliper;
   const bodyHeight = depth - 4 * caliper;
-  const correctedWidth = round(width - Math.min(3, 2 * caliper / 3));
+  const correctedWidth = roundMm(width - Math.min(3, 2 * caliper / 3));
   const glue = Math.min(30, Math.floor(width / 4));
   const glueBevel = Math.round(glue * Math.tan(Math.PI / 12) * 100) / 100;
   const shortFlap = length / 2;
@@ -73,23 +71,10 @@ export function generate0206({ length, width, depth, caliper, paperType = "corru
   shortPanel(length, endX, true);
   elements.push([2, 0, backX, 0, backX - glue, glueBevel, backX - glue, bodyHeight - glueBevel, backX, bodyHeight]);
 
-  const bounds = pointBounds(elements);
-  const blankWidth = round(bounds.maxX - bounds.minX);
-  const blankHeight = round(bounds.maxY - bounds.minY);
-  const pathLength = (element) => {
-    if (element[0] === 1) return r * (((element[6] - element[5]) % 360 + 360) % 360) * Math.PI / 180;
-    let total = 0;
-    for (let i = 4; i < element.length; i += 2) total += Math.hypot(element[i] - element[i - 2], element[i + 1] - element[i - 1]);
-    return total;
-  };
   return {
     parameters: { boxType: "0206", length, width, depth, caliper, paperType },
     elements,
-    meta: {
-      boxId: "0206", width: blankWidth, height: blankHeight, area: round(blankWidth * blankHeight),
-      solidLength: round(elements.filter((e) => e[1] === 0).reduce((sum, e) => sum + pathLength(e), 0)),
-      foldLength: round(elements.filter((e) => e[1] === 1).reduce((sum, e) => sum + pathLength(e), 0)),
-    },
+    meta: buildGeometryMeta("0206", elements),
     compensation: { radius: r, highLow, backHighLow, bodyHeight, correctedWidth, glue, glueBevel, shortFlap, backFlap },
   };
 }

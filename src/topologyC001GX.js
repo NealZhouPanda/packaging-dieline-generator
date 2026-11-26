@@ -1,118 +1,14 @@
 import { pointBounds } from "./svg.js";
+import { createTopologyHelpers } from "./topology/helpers.js";
 
-const EPSILON = 1e-4;
-const ARC_STEP_DEGREES = 5.625;
-
-function lineFrom(element, reverse = false) {
-  if (element?.[0] !== 0) throw new RangeError("C001GX 拓扑索引与刀模线类型不匹配");
-  const line = { type: 1, x1: element[2], y1: element[3], x2: element[4], y2: element[5] };
-  return reverse
-    ? { type: 1, x1: line.x2, y1: line.y2, x2: line.x1, y2: line.y1 }
-    : line;
-}
-
-function axis(x1, y1, x2, y2) {
-  return { type: 1, x1, y1, x2, y2 };
-}
-
-function sourceArcPoints(element) {
-  if (element?.[0] !== 1) throw new RangeError("C001GX 拓扑索引与刀模圆弧类型不匹配");
-  const [, , cx, cy, radius, start, end] = element;
-  const sweep = ((end - start) % 360 + 360) % 360;
-  const startAngle = (-end * Math.PI) / 180;
-  const steps = Math.max(1, Math.ceil(sweep / ARC_STEP_DEGREES));
-  return Array.from({ length: steps + 1 }, (_, index) => {
-    const angle = startAngle + (sweep * Math.PI * index) / (180 * steps);
-    return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)];
-  });
-}
-
-function sourceElementPoints(element) {
-  if (element?.[0] === 0) return [[element[2], element[3]], [element[4], element[5]]];
-  if (element?.[0] === 1) return sourceArcPoints(element);
-  if (element?.[0] === 2) {
-    const points = [];
-    for (let index = 2; index + 1 < element.length; index += 2) {
-      points.push([element[index], element[index + 1]]);
-    }
-    return points;
-  }
-  throw new RangeError("C001GX 拓扑包含不支持的刀模线类型");
-}
-
-function samePoint(left, right) {
-  return Math.abs(left[0] - right[0]) < EPSILON && Math.abs(left[1] - right[1]) < EPSILON;
-}
-
-function appendPoint(points, point) {
-  if (!points.length || !samePoint(points.at(-1), point)) points.push(point);
-}
-
-function appendConnected(points, element) {
-  const segment = sourceElementPoints(element);
-  if (!points.length) {
-    for (const point of segment) appendPoint(points, point);
-    return;
-  }
-  const last = points.at(-1);
-  const startDistance = Math.hypot(last[0] - segment[0][0], last[1] - segment[0][1]);
-  const endDistance = Math.hypot(last[0] - segment.at(-1)[0], last[1] - segment.at(-1)[1]);
-  if (endDistance < startDistance) segment.reverse();
-  for (const point of segment) appendPoint(points, point);
-}
-
-function connectedPolygon(start, elements) {
-  const points = [[...start]];
-  for (const element of elements) appendConnected(points, element);
-  if (points.length > 1 && samePoint(points[0], points.at(-1))) points.pop();
-  return points;
-}
-
-function pointOnLine([x, y], line) {
-  const dx = line.x2 - line.x1;
-  const dy = line.y2 - line.y1;
-  const length = Math.hypot(dx, dy);
-  if (length < EPSILON) return false;
-  const cross = Math.abs((x - line.x1) * dy - (y - line.y1) * dx) / length;
-  if (cross > EPSILON) return false;
-  const dot = (x - line.x1) * dx + (y - line.y1) * dy;
-  return dot >= -EPSILON && dot <= dx * dx + dy * dy + EPSILON;
-}
-
-function exposedEdges(points, foldLines) {
-  return points.map((point, index) => {
-    const next = points[(index + 1) % points.length];
-    return foldLines.some((line) => pointOnLine(point, line) && pointOnLine(next, line)) ? null : index;
-  }).filter((index) => index !== null);
-}
-
-function cloneClosed(points) {
-  return [...points.map((point) => [...point]), [...points[0]]];
-}
-
-function makePiece({
-  id,
-  label,
-  points,
-  parentId = null,
-  sourceLine = null,
-  phaseAngles = [0],
-  foldLinesToDraw = [],
-}, allFoldLines) {
-  const edges = exposedEdges(points, allFoldLines);
-  return {
-    id,
-    label,
-    kind: "panel",
-    netPoints: points,
-    holeNetPoints: [],
-    sideNetPoints: cloneClosed(points),
-    exposedEdges: edges,
-    sideExposedEdges: edges,
-    foldLinesToDraw,
-    foldRule: { parentId, sourceLine, phaseAngles },
-  };
-}
+const {
+  axis,
+  lineFrom,
+  sourceArcPoints,
+  connectedPolygon,
+  makePiece,
+  extractFoldLines,
+} = createTopologyHelpers({ boxLabel: "C001GX", epsilon: 1e-4, arcStepDegrees: 5.625, includeHoles: true });
 
 function styleIndexes(style) {
   if (style === 1) {
@@ -226,9 +122,7 @@ export function createC001GXTopology(geometry) {
     S5TT: [e[indexes.lock]],
   };
 
-  const allFoldLines = e
-    .filter((element) => element[0] === 0 && element[1] === 1)
-    .map((element) => lineFrom(element));
+  const allFoldLines = extractFoldLines(e);
   const definitions = [
     ["M0", "正面", null, null, [0]],
     ["M1", "左侧面", "M0", hinges.M1, phases.M1],

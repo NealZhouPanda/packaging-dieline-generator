@@ -72,23 +72,22 @@ try {
     throw new Error("Single-file build unexpectedly contains a network URL");
   }
 
-  const outputs = [
-    resolve(root, "app/包装刀模生成器.html"),
-    resolve(root, "release/包装刀模生成器.html"),
-    resolve(root, "docs/index.html"),
-  ];
-  for (const output of outputs) {
-    await mkdir(dirname(output), { recursive: true });
-    const temporaryOutput = `${output}.codex-tmp`;
-    await rm(temporaryOutput, { force: true });
-    try {
-      await writeFile(temporaryOutput, html);
-      await copyBuildOutput(temporaryOutput, output);
-    } finally {
-      await rm(temporaryOutput, { force: true });
-    }
+  const outFlagIndex = process.argv.indexOf("--out");
+  const customOut = outFlagIndex >= 0 ? process.argv[outFlagIndex + 1] : null;
+  if (outFlagIndex >= 0 && !customOut) {
+    throw new Error("Missing path after --out");
   }
-  console.log(outputs.join("\n"));
+  const output = resolve(root, customOut || "dist/包装刀模生成器.html");
+  await mkdir(dirname(output), { recursive: true });
+  const temporaryOutput = `${output}.codex-tmp`;
+  await rm(temporaryOutput, { force: true });
+  try {
+    await writeFile(temporaryOutput, html);
+    await copyBuildOutput(temporaryOutput, output);
+  } finally {
+    await rm(temporaryOutput, { force: true });
+  }
+  console.log(output);
 } finally {
   await rm(tempDir, { recursive: true, force: true });
 }

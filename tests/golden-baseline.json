@@ -1,0 +1,493 @@
+{
+  "0201-default": {
+    "boxId": "0201",
+    "elementCount": 70,
+    "meta": {
+      "boxId": "0201",
+      "width": 1107,
+      "height": 420,
+      "solidLength": 4222.869,
+      "foldLength": 3014,
+      "area": 464940
+    },
+    "compensation": {
+      "of": 5,
+      "of1": 5,
+      "l1": 350,
+      "w1": 186.666,
+      "f": 95,
+      "f1": 95,
+      "g": 30,
+      "t": 15,
+      "r": 2.5
+    },
+    "elementsSha": "e5268bc1b95760620384b5bf2dc78241bd7c0ad4ae909f225a62f5adef990fce",
+    "topologySha": "89effaabcfadaf7d74d708df20cf96da22daddd71ec72524e749fe45f2c3bcd4",
+    "svgSha": "bc9c2268cae7a0eeee2e25254ae39b1f595e3f6f51c889057a1c1d4884ebc4dd",
+    "pdfSha": "9dc26d97ceafd347a793df05c287b7767b5ea30ea4df305030fb77b411504fee"
+  },
+  "0201-narrow": {
+    "boxId": "0201",
+    "elementCount": 70,
+    "meta": {
+      "boxId": "0201",
+      "width": 827.66,
+      "height": 280,
+      "solidLength": 2527.056,
+      "foldLength": 2479.32,
+      "area": 231744.8
+    },
+    "compensation": {
+      "of": 3,
+      "of1": 3,
+      "l1": 350,
+      "w1": 48,
+      "f": 25,
+      "f1": 25,
+      "g": 30,
+      "t": 15,
+      "r": 1.5
+    },
+    "elementsSha": "a1553f542653afbd7c2f4c66021775637091b398368e80869cb698330bedaaa7",
+    "topologySha": "afe39e35173099fa4d4e46e78aec1065d73308ada3cec7945255df4b22bc79e4",
+    "svgSha": "c338ee725f3b0f7d63d2da93d57cca527ce549248d8dbaa6876fc2ff227fb574",
+    "pdfSha": "4c9523b518a98df0993c8b89e3d6eabc52d141bd7c5016e7ccc0ae8268081b14"
+  },
+  "0202A-default": {
+    "boxId": "0202A",
+    "elementCount": 56,
+    "meta": {
+      "boxId": "0202A",
+      "width": 1107,
+      "height": 422,
+      "solidLength": 4216.2,
+      "foldLength": 3068,
+      "area": 467154
+    },
+    "compensation": {
+      "of": 3,
+      "of1": 3,
+      "l1": 350,
+      "w1": 187,
+      "f": 96,
+      "f1": 96,
+      "g": 30,
+      "t": 15,
+      "r": 3
+    },
+    "elementsSha": "d436dc067bbc756812be4e8cbf51ffd11b56bc0c61b7e1715ac2aa4999ddbc7d",
+    "topologySha": null,
+    "svgSha": "92726a68c364196bc4e9d55c7470618120f86919ca2b7cc82e2eb03f15c2f828",
+    "pdfSha": "e5aca5439b2379455c4de888e2c0ff9982493ce800b8676602c5e07d8d3bb782"
+  },
+  "0202A-large": {
+    "boxId": "0202A",
+    "elementCount": 56,
+    "meta": {
+      "boxId": "0202A",
+      "width": 1433,
+      "height": 951,
+      "solidLength": 6604.2,
+      "foldLength": 5396,
+      "area": 1362783
+    },
+    "compensation": {
+      "of": 5,
+      "of1": 5,
+      "l1": 405,
+      "w1": 294,
+      "f": 150.5,
+      "f1": 150.5,
+      "g": 30,
+      "t": 15,
+      "r": 3
+    },
+    "elementsSha": "b772ee84930a8aa5a556697ea4efee82338a0888800d415c2ef0405651c1848f",
+    "topologySha": null,
+    "svgSha": "4811b59f1c711a9feddd02f0c7f650c31e5c2717e06e00c22616fef527ea3877",
+    "pdfSha": "9ac7d13f572f9aaa832ce22467f3e77c3fcf4affbd812ddd59478d6d4bf21d5f"
+  },
+  "0421-default": {
+    "boxId": "0421",
+    "elementCount": 90,
+    "meta": {
+      "boxId": "0421",
+      "width": 1275.34,
+      "height": 1060,
+      "solidLength": 5971,
+      "foldLength": 3085.3,
+      "area": 1351860.4
+    },
+    "compensation": {
+      "sty1": 1,
+      "of": 5,
+      "f": 95,
+      "td": 6,
+      "to": 3.333
+    },
+    "elementsSha": "cf054006d3cc2b1d4c82114972da8b33e263b7a2928fa93b0bf321d4cdcdaf4f",
+    "topologySha": "4827d27dc69e0db0437344e97371d4954bd036b5d461d3aba2875615e5de8d21",
+    "svgSha": "5ae9cee865752f6feb136e2147f5375768d29b489db0408db116a512ab95dbba",
+    "pdfSha": "057583c8eae8e576df738c55782abcd4e476637cba9cedf83fdad42c97586e73"
+  },
+  "0421-white-1mm": {
+    "boxId": "0421",
+    "elementCount": 90,
+    "meta": {
+      "boxId": "0421",
+      "width": 702.62,
+      "height": 698,
+      "solidLength": 3853.4,
+      "foldLength": 2644.9,
+      "area": 490428.76
+    },
+    "compensation": {
+      "sty1": 1,
+      "of": 1,
+      "f": 100,
+      "td": 1.2,
+      "to": 0.667
+    },
+    "elementsSha": "1f7c57272805760b226a53b58d8b6edd3427a149d2b9fabb6b2988b93a0fb04b",
+    "topologySha": "8d755d4ddc5cafc1f25879e1905d3033bd406cea7808739728f15f0a15102995",
+    "svgSha": "48bc4dfa48e72ba6a05859657894fbb7b5fea0677fc0304321b158f95055379c",
+    "pdfSha": "4ee1d689da7d6e52f007a52ce501f07cc76931009192799ce1ae55a614dfe1de"
+  },
+  "E005C-shallow": {
+    "boxId": "E005C",
+    "elementCount": 108,
+    "meta": {
+      "boxId": "E005C",
+      "width": 520,
+      "height": 551,
+      "solidLength": 3509.163,
+      "foldLength": 2889,
+      "area": 286520
+    },
+    "compensation": {
+      "of": 3,
+      "of1": 3,
+      "l1": 300,
+      "w1": 200,
+      "f": 100,
+      "f1": 100,
+      "g": 0,
+      "t": 50,
+      "r": 3
+    },
+    "elementsSha": "d075c7ec811e5b62779388802e282be13175840d801076d97860b3cfaa11bc5c",
+    "topologySha": "33f3eb164fc86acd407a4f3ba0e1af28d25be24eaa56ee31931053d031079d99",
+    "svgSha": "99f5d1dfec3ef48636b93672d8f6203e5601180ce1a5acaea06f2aaf7885258f",
+    "pdfSha": "422de6181fd1323b04dd4c96b5342fa6232a0ed3cd9f31da91aea5d853349fba"
+  },
+  "E005C-deep": {
+    "boxId": "E005C",
+    "elementCount": 110,
+    "meta": {
+      "boxId": "E005C",
+      "width": 1290,
+      "height": 1071,
+      "solidLength": 6339.038,
+      "foldLength": 4095,
+      "area": 1381590
+    },
+    "compensation": {
+      "of": 3,
+      "of1": 3,
+      "l1": 350,
+      "w1": 190,
+      "f": 95,
+      "f1": 95,
+      "g": 0,
+      "t": 230,
+      "r": 3
+    },
+    "elementsSha": "f97a114507f127d7e73cfdd420149c40c22a761bf2cdd8167e28fa0790d48166",
+    "topologySha": "0338df438bceeee498945000f8430bb1d1752c31ae352e58c60c321b7e45cff7",
+    "svgSha": "4e1b7ccd817ebcf7f5d780e85388b8c38d51526b7009b2aadeb6c182291d68e5",
+    "pdfSha": "9e956a35f1d5406e47a015407adbb1b782289fb5d85fe78ed7a5c0007e786b3d"
+  },
+  "C001GX-style2-wc": {
+    "boxId": "C001GX",
+    "elementCount": 100,
+    "meta": {
+      "boxId": "C001GX",
+      "width": 1104.67,
+      "height": 572.5,
+      "solidLength": 4505.649,
+      "foldLength": 3127.106,
+      "area": 632423.575
+    },
+    "compensation": {
+      "of": 0.5,
+      "of1": 0.5,
+      "l1": 350,
+      "w1": 190,
+      "f": 95,
+      "f1": 95,
+      "g": 25,
+      "t": 15,
+      "r": 3
+    },
+    "elementsSha": "8098f6005f415f893b2fac4e4768a0f3b2a65a2816c345214a963a809079cc8b",
+    "topologySha": "9d889093865f14f9e367ae30379ef73df7987968e9adf96d9bf6f48fbeeac877",
+    "svgSha": "80a88d8f9383853513bc68d82e36f8b47adab94b95989c4c323bb83850c90eca",
+    "pdfSha": "f2655e4cdcf9a09034c4057c32ac5bf4b40925b8154c225b45c99b702d826808"
+  },
+  "C001GX-style1-wc1": {
+    "boxId": "C001GX",
+    "elementCount": 96,
+    "meta": {
+      "boxId": "C001GX",
+      "width": 984.33,
+      "height": 445,
+      "solidLength": 3904.878,
+      "foldLength": 2451.296,
+      "area": 438026.85
+    },
+    "compensation": {
+      "of": 1,
+      "of1": 1,
+      "l1": 300,
+      "w1": 180,
+      "f": 90,
+      "f1": 90,
+      "g": 25,
+      "t": 15,
+      "r": 3
+    },
+    "elementsSha": "3900fe749f2dd4b8b72b1ceba6c88552ea9d687a6025b577c691b966111d9d94",
+    "topologySha": "fd3369970c97b03823b17fcf3c831e8a0f1b5643df3de2f5c931a11c28304f72",
+    "svgSha": "3f2d2d7e621db0e8a874e3275d075254df268eb8c504de01c57942179f7d889a",
+    "pdfSha": "89363b1d0543d7a2882b9ee01aaa3e8d9c69d46f5c2735c14c687b3161f95cc7"
+  },
+  "C001GX-corrugated": {
+    "boxId": "C001GX",
+    "elementCount": 100,
+    "meta": {
+      "boxId": "C001GX",
+      "width": 1103,
+      "height": 571,
+      "solidLength": 4671.052,
+      "foldLength": 2895.102,
+      "area": 629813
+    },
+    "compensation": {
+      "of": 3,
+      "of1": 3,
+      "l1": 320,
+      "w1": 220,
+      "f": 110,
+      "f1": 110,
+      "g": 25,
+      "t": 15,
+      "r": 3
+    },
+    "elementsSha": "24c9fd6688d67740d211e60a74cd3f7d942e97ddc68b131586cb48d1eff4df18",
+    "topologySha": "d7d2af045f8be3ad84f1e0fd208e4cf82c154dc259b92cfa0c0f659e9c7c2f26",
+    "svgSha": "e636cf80e7ee459d43225ea47ae3beadbb2cfbabe67d3b2534012185e5cc6bb2",
+    "pdfSha": "3d75c6870376f7f258c8b3cee565f24a148054d563339b41db155f5b64b90106"
+  },
+  "K016A-default": {
+    "boxId": "K016A",
+    "elementCount": 110,
+    "meta": {
+      "boxId": "K016A",
+      "width": 1093,
+      "height": 522,
+      "solidLength": 5071.4,
+      "foldLength": 3625.8,
+      "area": 570546
+    },
+    "compensation": {
+      "sty1": 1,
+      "of": 3,
+      "f": 95,
+      "td": 3.6,
+      "to": 2
+    },
+    "elementsSha": "a1b1e9c60017b33b17f81fdf0ddc08dbe13f15b1a8f98bdbd8af8fa84a671af1",
+    "topologySha": "b2a8b7e32c13895f92d889f3e592d786d9146962dac08088b7a76fbefc7f8ed4",
+    "svgSha": "09b3c7587c4130821bbfd42a27c922823ff2714f0c5d45ec4d39dc69350fc11d",
+    "pdfSha": "dc6955fb1d13ed80ace2a91f6f36cc484a8772e4473579326aff01404a1850b6"
+  },
+  "K016A-base": {
+    "boxId": "K016A",
+    "elementCount": 110,
+    "meta": {
+      "boxId": "K016A",
+      "width": 614,
+      "height": 270.67,
+      "solidLength": 3124.9,
+      "foldLength": 1865.9,
+      "area": 166191.38
+    },
+    "compensation": {
+      "sty1": 1,
+      "of": 1,
+      "f": 50,
+      "td": 1.2,
+      "to": 0.667
+    },
+    "elementsSha": "9cebb142278bb7231648f769f7a7f5c560110bdfd26840acf54a3b8a5ea2f532",
+    "topologySha": "393cf4433f902053486d20a76be276df69b67f3fc0d50dc663525ff4f4340cf7",
+    "svgSha": "20383c8cabc1a8bf9cb7ad9ef930004a3526d291b79c622f4fd6b146e4ff6612",
+    "pdfSha": "de441baa4d93fcdb8f7e61045b8829c062c22e807155f46a74e2ab20d92edadf"
+  },
+  "0206-default": {
+    "boxId": "0206",
+    "elementCount": 62,
+    "meta": {
+      "boxId": "0206",
+      "width": 1108,
+      "height": 610,
+      "area": 675880,
+      "solidLength": 5571.736,
+      "foldLength": 3016
+    },
+    "compensation": {
+      "radius": 1.5,
+      "highLow": 6,
+      "backHighLow": 3,
+      "bodyHeight": 218,
+      "correctedWidth": 188,
+      "glue": 30,
+      "glueBevel": 8.04,
+      "shortFlap": 175,
+      "backFlap": 187
+    },
+    "elementsSha": "6acc7ba49a0920cd06fee04a6c10c78e3de034b903538731afab71ec7e8469cd",
+    "topologySha": "8032d765262444a9755d475f99b5a86ea311bb23a49b75348c32005ac4c302ca",
+    "svgSha": "edc2a2ddde605273acea2ca4265e56b5928b335511f2e05557aeb2095ece70bd",
+    "pdfSha": "2a03ec230bb627e0b8cbcd5c424a3cef3196771c35f637a813cefa2968d54606"
+  },
+  "0206-white": {
+    "boxId": "0206",
+    "elementCount": 62,
+    "meta": {
+      "boxId": "0206",
+      "width": 789.667,
+      "height": 460,
+      "area": 363246.82,
+      "solidLength": 4003.655,
+      "foldLength": 2229.334
+    },
+    "compensation": {
+      "radius": 0.25,
+      "highLow": 1,
+      "backHighLow": 0.5,
+      "bodyHeight": 178,
+      "correctedWidth": 139.667,
+      "glue": 30,
+      "glueBevel": 8.04,
+      "shortFlap": 120,
+      "backFlap": 139.5
+    },
+    "elementsSha": "f982910a72be63e811c3a934e843484becb63fbc6a52c7ba2349173f11f4647a",
+    "topologySha": "1af32a951ab5d5a3eeee8d1a90edf9b3d5dd5d287e4e0803408a9e54a501d2c7",
+    "svgSha": "e584b6474559edef7a0136fa4f5a6f946d0f4501b5558be77d787065c36de9c6",
+    "pdfSha": "cc69d44a431b54317a29b4e5c7c94d1e734dbbc967f22b5177dfb206bc27b98c"
+  },
+  "T004C-style2": {
+    "boxId": "T004C",
+    "elementCount": 109,
+    "meta": {
+      "boxId": "T004C",
+      "width": 464.5,
+      "height": 394,
+      "area": 183013,
+      "solidLength": 2629.474,
+      "foldLength": 2383.1
+    },
+    "compensation": {
+      "of": 0.5,
+      "r": 0.8,
+      "w1": 99.5,
+      "w2": 99,
+      "g": 25,
+      "c": 25,
+      "a": 60,
+      "x": 3.5,
+      "y": 2.9,
+      "x3": 10.5,
+      "h": 50,
+      "h1": 30,
+      "h2": 20,
+      "hr": 5,
+      "b": 50,
+      "b1": 0.8
+    },
+    "elementsSha": "a6fcb8876c06316926789f7429a7d10d8933e08b92dff7243d70340b68587e61",
+    "topologySha": "6a85a37942ffd7960c2ac2222213b37b0d4d4a544d295f4c58d62a27352ca90d",
+    "svgSha": "24a5277fffcaf6cd841d799b53f02f0029c9cdf4da2d20994ef7559f205078b3",
+    "pdfSha": "3b08be62cbdb2821ab472e7f762430ef1bc02b7ad7ffec176c8feccd20ba10a5"
+  },
+  "T004C-style1": {
+    "boxId": "T004C",
+    "elementCount": 107,
+    "meta": {
+      "boxId": "T004C",
+      "width": 464.5,
+      "height": 394,
+      "area": 183013,
+      "solidLength": 2607.118,
+      "foldLength": 2425.1
+    },
+    "compensation": {
+      "of": 0.5,
+      "r": 0.8,
+      "w1": 99.5,
+      "w2": 99,
+      "g": 25,
+      "c": 25,
+      "a": 60,
+      "x": 3.5,
+      "y": 2.9,
+      "x3": 0,
+      "h": 50,
+      "h1": 30,
+      "h2": 20,
+      "hr": 5,
+      "b": 50,
+      "b1": 0.8
+    },
+    "elementsSha": "e5742a2d3b09b189fc3092987db2e924a9a212fbf09b8545e14b63fe51bb8b26",
+    "topologySha": "fdd91cd614d1d1ba310d56ded74c08f914b623329b40b075d7fb863323c1bba0",
+    "svgSha": "1ae19b6c6c773b3b770c88a9065bec3bab8cd09506f2c4d894aba4d6aec9e1cf",
+    "pdfSha": "0f8428bddefb90b534c398be31f35c62dacae0f2c4d8f7bb6e4008269664cd4f"
+  },
+  "T004C-corrugated": {
+    "boxId": "T004C",
+    "elementCount": 109,
+    "meta": {
+      "boxId": "T004C",
+      "width": 1102,
+      "height": 572,
+      "area": 630344,
+      "solidLength": 4784.138,
+      "foldLength": 4910.96
+    },
+    "compensation": {
+      "of": 1.5,
+      "r": 3,
+      "w1": 187,
+      "w2": 184,
+      "g": 25,
+      "c": 25,
+      "a": 104.5,
+      "x": 6,
+      "y": 3,
+      "x3": 20,
+      "h": 95,
+      "h1": 88,
+      "h2": 38,
+      "hr": 9,
+      "b": 50,
+      "b1": 3
+    },
+    "elementsSha": "500e62491c28442819e9d73d0d60e224c3f2cb790098f9d7e96120fec0c10494",
+    "topologySha": "1be516e106bdb89ceffa6ffe7bd8226682ba52ad47dbb669da7f56ccce78aeeb",
+    "svgSha": "3792959b4d133af412e80f694ff408d5dd1214ab2809135a5b047828431d6242",
+    "pdfSha": "0692ac1852a8c4af0a9cec18f5cb2fd2bd406895d17d5adc944c659548ab3b73"
+  }
+}

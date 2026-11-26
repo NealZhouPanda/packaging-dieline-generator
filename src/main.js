@@ -1,9 +1,4 @@
-import { generate0202A } from "./generator0202a.js";
-import { generate0206 } from "./generator0206.js";
-import { generateT004C } from "./generatorT004C.js";
-import { generate0421 } from "./generator0421.js";
-import { generateK016A } from "./generatorK016A.js";
-import { generate0201, generateC001GX, generateE005C } from "./generators-legacy.js";
+import { generateRegisteredBox, getBoxDefinition } from "./boxes/registry.js";
 import { supportsBoxTopology } from "./box-topology.js";
 import { blanksPerSheet, containerLoadCount, exceedsSideLimit, netArea, PRACTICAL_LOAD_FACTOR, sideSumCm, supportsNetArea, volumetricWeightKg } from "./netarea.js";
 import { detectFace, remapDimensions } from "./orientation.js";
@@ -20,21 +15,9 @@ const inputs = {
 };
 const boxTypeSelect = document.querySelector("#boxType");
 const paperTypeSelect = document.querySelector("#paperType");
-const generators = Object.freeze({
-  "0201": generate0201,
-  "0206": generate0206,
-  T004C: generateT004C,
-  "0202A": generate0202A,
-  "0421": generate0421,
-  K016A: generateK016A,
-  E005C: generateE005C,
-  C001GX: generateC001GX,
-});
 
 function generateBox(parameters) {
-  const generator = generators[parameters.boxType || "0201"];
-  if (!generator) throw new RangeError(`Unknown box type: ${parameters.boxType}`);
-  return generator(parameters);
+  return generateRegisteredBox(parameters);
 }
 // 系统层限制：批量生产常见设备（1224 型水墨印刷开槽模切机）的最大进纸幅面。
 // 不在界面显示；如供应商设备不同，改这里即可。
@@ -89,11 +72,12 @@ function setDesignView(view) {
     tab.setAttribute("aria-selected", String(active));
   }
   for (const [key, node] of Object.entries(designViews)) node.hidden = key !== nextView;
+  textureEditor.setActive(nextView === "texture");
   if (nextView === "three") {
-    // 标签切换时再提交一次当前画布，避免贴图页已更新但 3D 仍停留在旧材质。
+    // 仅在切入 3D 视图时再提交当前画布并激活按需渲染，避免结构页后台空耗。
     threePreview?.setTextureCanvas(textureEditor.getArtworkCanvas());
-    threePreview?.resize();
   }
+  threePreview?.setActive(nextView === "three");
 }
 
 function syncDesignTabs(boxType) {
@@ -115,6 +99,7 @@ const textureEditor = new TextureEditor({
   status: document.querySelector("#textureStatus"),
   onChange: (canvas) => threePreview?.setTextureCanvas(canvas),
 });
+textureEditor.setActive(false);
 
 document.querySelector("#textureImport").addEventListener("click", () => document.querySelector("#textureFileInput").click());
 document.querySelector("#textureReset").addEventListener("click", () => textureEditor.reset());
@@ -198,8 +183,9 @@ function values() {
 }
 
 function makeFilename(parameters) {
-  const style = parameters.boxType === "C001GX" ? `_S${parameters.c001gxTongueStyle || 2}` : parameters.boxType === "T004C" ? `_S${parameters.t004cTongueStyle || 2}` : "";
-  return `${parameters.boxType || "0201"}_L${parameters.length}_W${parameters.width}_D${parameters.depth}_C${parameters.caliper}${style}`;
+  const boxType = parameters.boxType || "0201";
+  const suffix = getBoxDefinition(boxType)?.filenameSuffix?.(parameters) || "";
+  return `${boxType}_L${parameters.length}_W${parameters.width}_D${parameters.depth}_C${parameters.caliper}${suffix}`;
 }
 
 function checkMaterial(blankWidth, blankHeight, paperType) {
@@ -213,19 +199,27 @@ function checkMaterial(blankWidth, blankHeight, paperType) {
 }
 
 /** 为三个开口方向分别计算面积与每张可切数量，显示在图标上。0202A 用校准过的净面积；其他箱型用展开包络估算。 */
-function refreshFaceData(current) {
+function refreshFaceData(current, currentGeo = null) {
   const sheet = sheetSizeFor(current.paperType);
   for (const span of document.querySelectorAll("[data-face-data]")) {
     const face = span.dataset.faceData;
     try {
       const dims = remapDimensions(current, face);
-      const geometry = generateBox({
-        ...dims,
-        caliper: current.caliper,
-        boxType: current.boxType,
-        paperType: current.paperType,
-        t004cTongueStyle: current.t004cTongueStyle,
-      });
+      const matchesCurrent =
+        currentGeo &&
+        dims.length === current.length &&
+        dims.width === current.width &&
+        dims.depth === current.depth;
+      const geometry = matchesCurrent
+        ? currentGeo
+        : generateBox({
+            ...dims,
+            caliper: current.caliper,
+            boxType: current.boxType,
+            paperType: current.paperType,
+            c001gxTongueStyle: current.c001gxTongueStyle,
+            t004cTongueStyle: current.t004cTongueStyle,
+          });
       const area = supportsNetArea(current.boxType)
         ? netArea(geometry.elements)
         : geometry.meta.width * geometry.meta.height;
@@ -243,8 +237,26 @@ function refreshFaceData(current) {
   }
 }
 
+/** 仅刷新抛重区域，避免切换抛比或三边和阈值时重算刀模与 3D。 */
+function refreshVolumetricWeight(parameters) {
+  if (!parameters) return;
+  const ratio = Number(dimRatioSelect.value);
+  const sideSum = sideSumCm(parameters);
+  const sideLimit = Number(sideSumLimitInput.value);
+  const overLimit = exceedsSideLimit(sideSum, sideLimit);
+  // 未超抛时不显示抛重数值（按实际重量计费，抛重无意义）
+  document.querySelector("#volWeightResult").hidden = !overLimit;
+  if (overLimit) {
+    document.querySelector("#volWeightNote").textContent =
+      `已超抛（三边和 ${sideSum.toFixed(0)}cm > ${sideLimit}cm），抛重为：`;
+    document.querySelector("#volWeight").textContent =
+      `${volumetricWeightKg(parameters, ratio).toFixed(1)} kg`;
+  }
+}
+
 /** 按当前货柜型号，为三个开口方向分别计算装柜数：主显实际估算（理论×0.88），小字附理论满载。 */
 function refreshContainerData(current) {
+  if (!current) return;
   const key = containerTypeSelect?.value;
   for (const cell of document.querySelectorAll("[data-container-face]")) {
     const theory = cell.parentElement.querySelector("small");
@@ -263,7 +275,24 @@ function refreshContainerData(current) {
   }
 }
 
+let pendingUpdateFrame = 0;
+function scheduleUpdate() {
+  if (pendingUpdateFrame) return;
+  if (typeof requestAnimationFrame === "function") {
+    pendingUpdateFrame = requestAnimationFrame(() => {
+      pendingUpdateFrame = 0;
+      update();
+    });
+  } else {
+    update();
+  }
+}
+
 function update() {
+  if (pendingUpdateFrame) {
+    cancelAnimationFrame(pendingUpdateFrame);
+    pendingUpdateFrame = 0;
+  }
   try {
     const geometry = generateBox(values());
     currentGeometry = geometry;
@@ -272,24 +301,16 @@ function update() {
 
     preview.innerHTML = currentSvg.replace(/^<\?xml[^>]+>\s*/, "");
     textureEditor.setGeometry(geometry);
+    if (currentView === "three") {
+      threePreview.setTextureCanvas(textureEditor.getArtworkCanvas());
+    }
     threePreview.setGeometry(geometry);
     syncDesignTabs(geometry.parameters.boxType);
     document.querySelector("#sheetWidth").textContent = `${geometry.meta.width} mm`;
     document.querySelector("#sheetHeight").textContent = `${geometry.meta.height} mm`;
-    const ratio = Number(dimRatioSelect.value);
-    const sideSum = sideSumCm(geometry.parameters);
-    const sideLimit = Number(sideSumLimitInput.value);
-    const overLimit = exceedsSideLimit(sideSum, sideLimit);
-    // 未超抛时不显示抛重数值（按实际重量计费，抛重无意义）
-    document.querySelector("#volWeightResult").hidden = !overLimit;
-    if (overLimit) {
-      document.querySelector("#volWeightNote").textContent =
-        `已超抛（三边和 ${sideSum.toFixed(0)}cm > ${sideLimit}cm），抛重为：`;
-      document.querySelector("#volWeight").textContent =
-        `${volumetricWeightKg(geometry.parameters, ratio).toFixed(1)} kg`;
-    }
+    refreshVolumetricWeight(geometry.parameters);
     checkMaterial(geometry.meta.width, geometry.meta.height, geometry.parameters.paperType);
-    refreshFaceData(geometry.parameters);
+    refreshFaceData(geometry.parameters, geometry);
     refreshContainerData(geometry.parameters);
     error.hidden = true;
     downloadButton.disabled = false;
@@ -305,7 +326,7 @@ function update() {
   }
 }
 
-for (const input of Object.values(inputs)) input.addEventListener("input", update);
+for (const input of Object.values(inputs)) input.addEventListener("input", scheduleUpdate);
 
 const faceButtons = [...document.querySelectorAll(".face-option")];
 let currentFace = detectFace({
@@ -348,22 +369,12 @@ fluteSelect.addEventListener("change", () => {
   syncMaterialControls();
   update();
 });
-customCaliperInput.addEventListener("input", update);
-dimRatioSelect.addEventListener("change", update);
-sideSumLimitInput.addEventListener("input", update);
-containerTypeSelect?.addEventListener("change", update);
-const boxDefaults = Object.freeze({
-  "0201": { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 5 },
-  "0206": { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 3 },
-  T004C: { length: 120, width: 100, depth: 200, paperType: "white-card", caliper: 0.5 },
-  "0421": { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 5 },
-  K016A: { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 3 },
-  E005C: { length: 350, width: 190, depth: 230, paperType: "corrugated", caliper: 3 },
-  C001GX: { length: 350, width: 190, depth: 230, paperType: "white-card", caliper: 0.5 },
-});
-
+customCaliperInput.addEventListener("input", scheduleUpdate);
+dimRatioSelect.addEventListener("change", () => refreshVolumetricWeight(currentGeometry?.parameters));
+sideSumLimitInput.addEventListener("input", () => refreshVolumetricWeight(currentGeometry?.parameters));
+containerTypeSelect?.addEventListener("change", () => refreshContainerData(currentGeometry?.parameters));
 function applyBoxDefaults(boxType) {
-  const defaults = boxDefaults[boxType];
+  const defaults = getBoxDefinition(boxType)?.defaults;
   if (!defaults) return;
   for (const key of ["length", "width", "depth"]) inputs[key].value = defaults[key];
   paperTypeSelect.value = defaults.paperType;

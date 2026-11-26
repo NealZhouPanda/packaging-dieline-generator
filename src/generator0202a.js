@@ -3,6 +3,8 @@ import lengthCalibration from "../reference/0202a-calibration/L351-W190-D230-CAL
 import widthCalibration from "../reference/0202a-calibration/L350-W191-D230-CAL3.json";
 import depthCalibration from "../reference/0202a-calibration/L350-W190-D231-CAL3.json";
 import caliperCalibration from "../reference/0202a-calibration/L350-W190-D230-CAL4.json";
+import { validateStandardParameters } from "./geometry/core.js";
+import { interpolateElementsByVariants, interpolateLinear } from "./geometry/calibration.js";
 
 const ORIGIN = Object.freeze({ length: 350, width: 190, depth: 230, caliper: 3 });
 const base = baseCalibration;
@@ -12,53 +14,6 @@ const axes = [
   depthCalibration,
   caliperCalibration,
 ];
-
-function validateDimension(name, value) {
-  if (!Number.isFinite(value) || value <= 0) {
-    throw new RangeError(`${name}必须是大于 0 的有效数字`);
-  }
-}
-
-/**
- * 本地运行范围：0202A 在此包络内保持有效刀模与导出结果。
- * 关键边界规则：
- * - W≥50：窄幅尺寸继续保持正向面宽和摇盖长度；
- * - W≤L−2：W>L−2 时摇盖切换防碰撞规则（2F>L 时 F=L/2）；
- * - CAL≤5：CAL≥8 时高低位补偿切换规则（双瓦楞未验证）。
- */
-const VERIFIED_RANGE = Object.freeze({
-  length: [50, 2000],
-  width: [50, 1200],
-  depth: [50, 1500],
-  caliper: [1.5, 5],
-});
-
-function validateVerifiedRange({ length, width, depth, caliper }) {
-  const labels = { length: "长 L", width: "宽 W", depth: "高 D", caliper: "纸厚" };
-  const values = { length, width, depth, caliper };
-  for (const [key, [min, max]] of Object.entries(VERIFIED_RANGE)) {
-    if (values[key] < min || values[key] > max) {
-      throw new RangeError(`${labels[key]}超出已验证范围（${min}–${max} mm），该尺寸尚未校准，不能生成刀模`);
-    }
-  }
-}
-
-function interpolateNumber(baseValue, axisValues, deltas) {
-  return baseValue + axisValues.reduce(
-    (sum, axisValue, index) => sum + deltas[index] * (axisValue - baseValue),
-    0,
-  );
-}
-
-function interpolateElement(element, index, deltas) {
-  return element.map((value, fieldIndex) => {
-    if (typeof value !== "number") return value;
-    const axisValues = axes.map((axis) => axis.elements[index][fieldIndex]);
-    const result = interpolateNumber(value, axisValues, deltas);
-    const rounded = Math.round(result * 1000) / 1000;
-    return Object.is(rounded, -0) ? 0 : rounded;
-  });
-}
 
 /**
  * 将基础曲线粘口替换为生产验证过的梯形粘口。
@@ -137,11 +92,7 @@ function adjustSlotFloors(elements) {
  * The glue flap is a trapezoid calibrated against the 2021 production PDF.
  */
 export function generate0202A({ length, width, depth, caliper, paperType = "corrugated" }) {
-  validateDimension("length", length);
-  validateDimension("width", width);
-  validateDimension("depth", depth);
-  validateDimension("caliper", caliper);
-  validateVerifiedRange({ length, width, depth, caliper });
+  validateStandardParameters({ length, width, depth, caliper, paperType });
 
   const deltas = [
     length - ORIGIN.length,
@@ -149,11 +100,15 @@ export function generate0202A({ length, width, depth, caliper, paperType = "corr
     depth - ORIGIN.depth,
     caliper - ORIGIN.caliper,
   ];
-  const interpolated = base.elements.map((element, index) => interpolateElement(element, index, deltas));
+  const interpolated = interpolateElementsByVariants(
+    base.elements,
+    axes.map((axis) => axis.elements),
+    deltas,
+  );
   const elements = adjustSlotFloors(straightenGlueFlap(interpolated));
 
   const metaValue = (key) =>
-    interpolateNumber(
+    interpolateLinear(
       base.meta[key],
       axes.map((axis) => axis.meta[key]),
       deltas,

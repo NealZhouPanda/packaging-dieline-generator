@@ -43,9 +43,11 @@ def main() -> None:
             missing += 1
             continue
         advance = hmtx[name][0]
-        widths[ch] = round(advance * 1000 / units)
+        width = round(advance * 1000 / units)
+        if width != 1000:
+            widths[ch] = width
     OUT.write_text(
-        "// 由 tools/build-font-widths.py 生成，勿手改。\nexport const PDF_FONT_WIDTHS = "
+        "// 由 tools/build-font-widths.py 生成，勿手改（仅记录非默认字宽，其余字符默认 1000）。\nexport const PDF_FONT_WIDTHS = "
         + json.dumps(widths, ensure_ascii=False, separators=(",", ":"))
         + ";\n",
         encoding="utf-8",

@@ -6,7 +6,7 @@
 """
 import base64
 import json
-import re
+import zlib
 from pathlib import Path
 
 from fontTools import subset
@@ -43,7 +43,10 @@ def gb2312_level1() -> str:
 
 def main() -> None:
     if not SRC.exists():
-        raise SystemExit(f"缺少字体: {SRC}")
+        raise SystemExit(
+            f"缺少源字体: {SRC}\n"
+            "请从 Google Fonts (Noto Sans SC, SIL OFL 1.1) 下载 NotoSansSC.ttf 放到 tools/fonts/ 目录后重试。"
+        )
     # 变量字体 → 固定 wght=400 实例（大幅缩小体积）
     if not INST.exists():
         font = TTFont(SRC)
@@ -69,10 +72,19 @@ def main() -> None:
             continue
         gids[ch] = font.getGlyphID(name)
     raw = SUBSET_TTF.read_bytes()
-    b64 = base64.b64encode(raw).decode("ascii")
-    data = {"base64": b64, "gids": gids, "bytes": len(raw)}
-    OUT.write_text("// 由 tools/build-font-subset.py 生成，勿手改。\nexport const PDF_FONT = " + json.dumps(data, ensure_ascii=False) + ";\n", "utf-8")
-    print(f"chars={len(gids)} 子集字体={len(raw)//1024}KB base64={len(b64)//1024}KB → {OUT.relative_to(ROOT)}")
+    compressed = zlib.compress(raw, level=9)
+    b64 = base64.b64encode(compressed).decode("ascii")
+    data = {"base64": b64, "encoding": "flate", "gids": gids, "bytes": len(raw)}
+    OUT.write_text(
+        "// 由 tools/build-font-subset.py 生成，勿手改。\nexport const PDF_FONT = "
+        + json.dumps(data, ensure_ascii=False)
+        + ";\n",
+        "utf-8",
+    )
+    print(
+        f"chars={len(gids)} 原始子集={len(raw)//1024}KB flate={len(compressed)//1024}KB "
+        f"base64={len(b64)//1024}KB → {OUT.relative_to(ROOT)}"
+    )
 
 
 if __name__ == "__main__":

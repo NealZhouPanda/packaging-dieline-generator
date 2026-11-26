@@ -1,4 +1,4 @@
-import { geometryToSvg, pointBounds } from "./svg.js";
+import { pointBounds } from "./svg.js";
 import { supportsBoxTopology } from "./box-topology.js";
 import { isPdfFile, renderPdfFirstPage } from "./pdf-texture.js";
 
@@ -27,8 +27,8 @@ export function artworkCanvasSizeFor(bounds, maxSize = OFFICIAL_ARTWORK_MAX_SIZE
 
 export function detectArtworkMaxSize() {
   if (typeof document === "undefined") return OFFICIAL_ARTWORK_FALLBACK_SIZE;
+  const probe = document.createElement("canvas");
   try {
-    const probe = document.createElement("canvas");
     probe.width = OFFICIAL_ARTWORK_MAX_SIZE;
     probe.height = OFFICIAL_ARTWORK_MAX_SIZE;
     const context = probe.getContext("2d");
@@ -40,6 +40,10 @@ export function detectArtworkMaxSize() {
       : OFFICIAL_ARTWORK_FALLBACK_SIZE;
   } catch {
     return OFFICIAL_ARTWORK_FALLBACK_SIZE;
+  } finally {
+    // 探测后立即释放 4096×4096 临时缓冲区，避免长期占用 ~64 MB 内存。
+    probe.width = 0;
+    probe.height = 0;
   }
 }
 
@@ -162,8 +166,12 @@ export class TextureEditor {
     this.nextLayerId = 1;
     this.activeLayerId = null;
     this.dragState = null;
-    this.artworkMaxSize = detectArtworkMaxSize();
+    this.isActive = true;
+    this.dirty = true;
+    this.artworkMaxSize = null;
     this.artworkCanvas = document.createElement("canvas");
+    this.artworkCanvas.width = 1;
+    this.artworkCanvas.height = 1;
     this.canvas.width = INITIAL_CANVAS_WIDTH;
     this.canvas.height = INITIAL_CANVAS_HEIGHT;
 
@@ -175,7 +183,25 @@ export class TextureEditor {
     canvas.addEventListener("pointercancel", (event) => this.endDrag(event));
     canvas.addEventListener("lostpointercapture", (event) => this.endDrag(event));
     canvas.addEventListener("keydown", (event) => this.moveActiveLayerByKeyboard(event));
-    this.render();
+  }
+
+  getArtworkMaxSize() {
+    if (this.artworkMaxSize == null) {
+      this.artworkMaxSize = detectArtworkMaxSize();
+    }
+    return this.artworkMaxSize;
+  }
+
+  hasArtwork() {
+    return this.layers.length > 0;
+  }
+
+  setActive(active) {
+    const next = Boolean(active);
+    this.isActive = next;
+    if (next && this.dirty) {
+      this.render({ syncArtwork: false });
+    }
   }
 
   setGeometry(geometry) {
@@ -190,6 +216,8 @@ export class TextureEditor {
         layer.height = 0;
       }
     }
+    this.dirty = true;
+    if (this.isActive === false) return;
     this.render();
   }
 
@@ -214,7 +242,7 @@ export class TextureEditor {
         let physicalHeight = 0;
         if (isPdfFile(file)) {
           this.setStatus(`正在解析 ${file.name} 的第 1 页…`);
-          const pdfLayer = await renderPdfFirstPage(file, { maxSize: this.artworkMaxSize });
+          const pdfLayer = await renderPdfFirstPage(file, { maxSize: this.getArtworkMaxSize() });
           image = pdfLayer.canvas;
           physicalWidth = pdfLayer.physicalWidth;
           physicalHeight = pdfLayer.physicalHeight;
@@ -409,7 +437,14 @@ export class TextureEditor {
   }
 
   getArtworkCanvas({ includePaper = false } = {}) {
-    const size = artworkCanvasSizeFor(this.bounds, this.artworkMaxSize);
+    if (!this.layers.length && !includePaper) {
+      if (this.artworkCanvas && (this.artworkCanvas.width !== 1 || this.artworkCanvas.height !== 1)) {
+        this.artworkCanvas.width = 1;
+        this.artworkCanvas.height = 1;
+      }
+      return null;
+    }
+    const size = artworkCanvasSizeFor(this.bounds, this.getArtworkMaxSize());
     if (this.artworkCanvas.width !== size.width || this.artworkCanvas.height !== size.height) {
       this.artworkCanvas.width = size.width;
       this.artworkCanvas.height = size.height;
@@ -421,6 +456,7 @@ export class TextureEditor {
   }
 
   render({ syncArtwork = true } = {}) {
+    this.dirty = false;
     this.prepareCanvas();
     const context = this.canvas.getContext("2d");
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -429,9 +465,6 @@ export class TextureEditor {
       const transform = this.canvasTransform();
       for (const element of this.geometry.elements) drawGeometryLine(context, element, transform);
       context.setLineDash([]);
-      // Keep the SVG conversion referenced here so the canvas view and export
-      // continue to share the same source geometry semantics.
-      geometryToSvg(this.geometry);
     }
     this.renderLayerList();
     // The editor stays transparent like the reference web editor. The 3D

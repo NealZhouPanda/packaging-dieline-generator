@@ -83,12 +83,23 @@ describe("PDF 图纸导出", () => {
     expect(pdf.trimEnd().endsWith("%%EOF")).toBe(true);
   });
 
-  it("内嵌 Noto Sans SC 子集（Type0 + CIDFontType2 + ToUnicode）", () => {
+  it("内嵌 Noto Sans SC 子集（Type0 + CIDFontType2 + FlateDecode + ToUnicode）", () => {
     expect(pdf).toContain("/Subtype /Type0");
     expect(pdf).toContain("/Subtype /CIDFontType2");
     expect(pdf).toContain("/FontFile2 8 0 R");
+    expect(pdf).toContain("/Filter /FlateDecode");
     expect(pdf).toContain("/Length1");
     expect(pdf).toContain("begincmap");
+  });
+
+  it("xref 交叉引用表对象编号连续无跳号", () => {
+    const xrefMatch = pdf.match(/xref\n0 (\d+)\n([\s\S]+?)\ntrailer\n<< \/Size (\d+)/);
+    expect(xrefMatch).toBeTruthy();
+    const declaredCount = Number(xrefMatch[1]);
+    const entries = xrefMatch[2].trim().split("\n");
+    expect(declaredCount).toBe(11);
+    expect(Number(xrefMatch[3])).toBe(declaredCount);
+    expect(entries).toHaveLength(declaredCount);
   });
 
   it("每个几何对象一条路径，刀线/压线颜色分组", () => {
@@ -115,7 +126,7 @@ describe("PDF 图纸导出", () => {
 
   it("注意事项写入文档属性（UTF-16BE）", () => {
     expect(pdf).toContain("/Title <FEFF");
-    expect(pdf).toContain("/Info 11 0 R");
+    expect(pdf).toContain("/Info 10 0 R");
   });
 
   it("uses the generated box type and paper type in PDF metadata", async () => {

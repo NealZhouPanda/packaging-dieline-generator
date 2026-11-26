@@ -1,6 +1,6 @@
 import { pointBounds } from "./svg.js";
+import { elementLength, roundMm } from "./geometry/core.js";
 
-const round = (v) => Math.round(v * 1000) / 1000;
 const degrees = (v) => v * 180 / Math.PI;
 const radians = (v) => v * Math.PI / 180;
 const polar = (x, y, r, angle) => [x + r * Math.cos(radians(angle)), y - r * Math.sin(radians(angle))];
@@ -124,11 +124,7 @@ export function generateT004C({ length: l, width: w, depth: d, caliper: cal, pap
   poly(end - e1 - cal / 2, cy2, end - e1 - cal / 2 - bevel2, tipY, back + e1 + cal / 2 + bevel2, tipY, back + e1 + cal / 2, cy2);
   hole(-2 * b - cal + b - 16, true);
   const bounds = pointBounds(e), blankW = bounds.maxX - bounds.minX, blankH = bounds.maxY - bounds.minY;
-  const pathLength = (element) => {
-    if (element[0] === 1) return element[4] * (((element[6] - element[5]) % 360 + 360) % 360) * Math.PI / 180;
-    let result = 0; for (let i = 4; i < element.length; i += 2) result += Math.hypot(element[i] - element[i - 2], element[i + 1] - element[i - 1]); return result;
-  };
   return { parameters: { boxType: "T004C", length: l, width: w, depth: d, caliper: cal, paperType, t004cTongueStyle: style }, elements: e,
-    meta: { boxId: "T004C", width: round(blankW), height: round(blankH), area: round(blankW * blankH), solidLength: round(e.filter((e) => !e[1]).reduce((s, e) => s + pathLength(e), 0)), foldLength: round(e.filter((e) => e[1]).reduce((s, e) => s + pathLength(e), 0)) },
+    meta: { boxId: "T004C", width: roundMm(blankW), height: roundMm(blankH), area: roundMm(blankW * blankH), solidLength: roundMm(e.filter((item) => !item[1]).reduce((s, item) => s + elementLength(item), 0)), foldLength: roundMm(e.filter((item) => item[1]).reduce((s, item) => s + elementLength(item), 0)) },
     compensation: { of, r, w1, w2, g, c, a, x, y, x3, h, h1, h2, hr, b, b1 } };
 }

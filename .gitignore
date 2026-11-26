@@ -1,6 +1,13 @@
 node_modules/
 dist/
+_site/
+app/
+release/
+docs/
+tools/fonts/*.ttf
 coverage/
+.codex-tmp/
+.codex-backups/
 .DS_Store
 *.log
 .env

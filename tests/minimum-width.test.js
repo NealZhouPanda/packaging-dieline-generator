@@ -1,19 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { createBoxTopology } from "../src/box-topology.js";
-import { generate0421 } from "../src/generator0421.js";
-import { generateK016A } from "../src/generatorK016A.js";
-import { generate0201, generateC001GX, generateE005C } from "../src/generators-legacy.js";
+import { UI_BOX_DEFINITIONS } from "../src/boxes/registry.js";
 import { containerLoadCount, volumetricWeightKg } from "../src/netarea.js";
 import { geometryToPdf } from "../src/pdf.js";
 import { geometryToSvg } from "../src/svg.js";
 
-const cases = [
-  ["0201", generate0201, { paperType: "corrugated", caliper: 5 }],
-  ["0421", generate0421, { paperType: "corrugated", caliper: 5 }],
-  ["E005C", generateE005C, { paperType: "corrugated", caliper: 3 }],
-  ["K016A", generateK016A, { paperType: "corrugated", caliper: 5 }],
-  ["C001GX", generateC001GX, { paperType: "white-card", caliper: 0.5, c001gxTongueStyle: 2 }],
-];
+const cases = UI_BOX_DEFINITIONS.map((def) => [
+  def.id,
+  def.generate,
+  {
+    paperType: def.defaults.paperType,
+    caliper: def.defaults.caliper,
+    ...(def.defaults.c001gxTongueStyle ? { c001gxTongueStyle: def.defaults.c001gxTongueStyle } : {}),
+    ...(def.defaults.t004cTongueStyle ? { t004cTongueStyle: def.defaults.t004cTongueStyle } : {}),
+  },
+]);
 
 const parameters = (overrides) => ({
   length: 350,

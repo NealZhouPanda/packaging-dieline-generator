@@ -122,10 +122,30 @@
     return value;
   }
 
+  function shouldSkipNode(node) {
+    if (!node) return true;
+    const element = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+    if (!element) return false;
+    if (element.id === "preview" || element.tagName === "CANVAS" || element.tagName === "STYLE" || element.tagName === "SCRIPT") {
+      return true;
+    }
+    return Boolean(element.closest?.("#preview, svg, canvas, style, script"));
+  }
+
   function visit(root) {
+    if (shouldSkipNode(root)) return;
+    if (root.nodeType === Node.TEXT_NODE) {
+      if (!originals.has(root)) originals.set(root, root.nodeValue);
+      const original = originals.get(root);
+      const next = language === "en" ? translate(original) : original;
+      if (root.nodeValue !== next) root.nodeValue = next;
+      return;
+    }
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
+    while (walker.nextNode()) {
+      if (!shouldSkipNode(walker.currentNode)) nodes.push(walker.currentNode);
+    }
     for (const node of nodes) {
       if (!originals.has(node)) originals.set(node, node.nodeValue);
       const original = originals.get(node);
@@ -172,11 +192,13 @@
   const observer = new MutationObserver((records) => {
     for (const record of records) {
       if (record.type === "characterData") {
+        if (shouldSkipNode(record.target)) continue;
         if (!originals.has(record.target)) originals.set(record.target, record.target.nodeValue);
         const original = originals.get(record.target);
         const next = language === "en" ? translate(original) : original;
         if (record.target.nodeValue !== next) record.target.nodeValue = next;
       } else {
+        if (shouldSkipNode(record.target)) continue;
         for (const node of record.addedNodes) {
           if (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE) visit(node);
         }

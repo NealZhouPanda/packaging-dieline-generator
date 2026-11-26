@@ -84,10 +84,24 @@ function wrapByWidth(text, sizePt, maxMm) {
   return lines.length ? lines : [""];
 }
 
+let cachedFontBytes = null;
+let cachedCidWidthArray = null;
+let cachedToUnicodeStream = null;
+
+function getFontBytes() {
+  if (!cachedFontBytes) {
+    cachedFontBytes = Uint8Array.from(atob(PDF_FONT.base64), (c) => c.charCodeAt(0));
+  }
+  return cachedFontBytes;
+}
+
 function cidWidthArray() {
+  if (cachedCidWidthArray !== null) return cachedCidWidthArray;
   const pairs = [];
   for (const [char, gid] of Object.entries(PDF_FONT.gids)) {
-    pairs.push([Number(gid), charWidth(char)]);
+    const width = charWidth(char);
+    // /DW 1000 已将默认字宽设为 1000，仅需写入非 1000 字宽（数字、字母及半角标点）。
+    if (width !== 1000) pairs.push([Number(gid), width]);
   }
   pairs.sort((a, b) => a[0] - b[0]);
   const parts = [];
@@ -102,7 +116,15 @@ function cidWidthArray() {
     }
     parts.push(`${start} [${run.join(" ")}]`);
   }
-  return `[ ${parts.join(" ")} ]`;
+  cachedCidWidthArray = `[ ${parts.join(" ")} ]`;
+  return cachedCidWidthArray;
+}
+
+function getToUnicodeStream() {
+  if (cachedToUnicodeStream === null) {
+    cachedToUnicodeStream = toUnicodeStream(PDF_FONT.gids);
+  }
+  return cachedToUnicodeStream;
 }
 
 function hexGids(text, gids) {
@@ -325,9 +347,9 @@ export function geometryToPdf(geometry, { filename = "dieline", date, ratio = 80
     renderSidebar(flow, pageH, lay),
   ].join("\n");
 
-  const fontBytes = Uint8Array.from(atob(PDF_FONT.base64), (c) => c.charCodeAt(0));
+  const fontBytes = getFontBytes();
 
-  const toUnicode = toUnicodeStream(PDF_FONT.gids);
+  const toUnicode = getToUnicodeStream();
   const toUnicodeLen = toUnicode.length;
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
@@ -355,26 +377,31 @@ export function geometryToPdf(geometry, { filename = "dieline", date, ratio = 80
 
   push("%PDF-1.4\n%\x80\x80\x80\x80\n");
   const offsets = [];
+  const isFlateFont = PDF_FONT.encoding === "flate";
+  const fontRawLength = PDF_FONT.bytes ?? fontBytes.length;
   objects.forEach((body, index) => {
     offsets.push(pdfBytes);
     if (index === 7) {
       const length = fontBytes.length;
-      push(`${index + 1} 0 obj\n<< /Length ${length} /Length1 ${length} >>\nstream\n`);
+      const filter = isFlateFont ? "/Filter /FlateDecode " : "";
+      push(`${index + 1} 0 obj\n<< ${filter}/Length ${length} /Length1 ${fontRawLength} >>\nstream\n`);
       chunks.push(fontBytes);
       pdfBytes += length;
-      push("endstream\nendobj\n");
+      push("\nendstream\nendobj\n");
       return;
     }
     push(`${index + 1} 0 obj\n${body}\nendobj\n`);
   });
+  const infoObjectNumber = objects.length + 1;
   const infoOffset = pdfBytes;
-  push(`11 0 obj\n${info}\nendobj\n`);
+  push(`${infoObjectNumber} 0 obj\n${info}\nendobj\n`);
   const xrefOffset = pdfBytes;
+  const xrefSize = infoObjectNumber + 1;
   const xrefLineEnd = [32, 10].map((code) => String.fromCharCode(code)).join("");
-  push(`xref\n0 12\n0000000000 65535 f${xrefLineEnd}`);
+  push(`xref\n0 ${xrefSize}\n0000000000 65535 f${xrefLineEnd}`);
   for (const offset of offsets) push(`${String(offset).padStart(10, "0")} 00000 n${xrefLineEnd}`);
   push(`${String(infoOffset).padStart(10, "0")} 00000 n${xrefLineEnd}`);
-  push(`trailer\n<< /Size 12 /Root 1 0 R /Info 11 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
+  push(`trailer\n<< /Size ${xrefSize} /Root 1 0 R /Info ${infoObjectNumber} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
 
   const result = new Uint8Array(pdfBytes);
   let position = 0;

@@ -831,6 +831,14 @@ export class ThreePreview {
     this.foldProgress = 1;
     this.paperColorInput = paperColorInput;
     this.geometry = null;
+    this.pendingGeometry = null;
+    this.geometryDirty = false;
+    this.isActive = false;
+    this.renderFrameId = 0;
+    this.sliderFrameId = 0;
+    this.pendingRotation = null;
+    this.pendingFoldProgress = null;
+    this.isPointerInteracting = false;
     this.topology = null;
     this.textureCanvas = null;
     this.edgeTextureType = "wa5";
@@ -841,7 +849,11 @@ export class ThreePreview {
     this.compositeCanvas = document.createElement("canvas");
     this.compositeCanvas.width = 1;
     this.compositeCanvas.height = 1;
-    this.texture = this.configureArtworkTexture(new THREE.CanvasTexture(this.compositeCanvas));
+    this.texture = null;
+    this._tmpBox3 = new THREE.Box3();
+    this._tmpCenter = new THREE.Vector3();
+    this._tmpSize = new THREE.Vector3();
+    this.wireframeMaterial = new THREE.LineBasicMaterial({ color: "#8d755c", transparent: true, opacity: 0.45 });
     this.scene = new THREE.Scene();
     this.scene.background = null;
     // lin3d.min.js uses PerspectiveCamera(45, aspect, .5, 20000) at
@@ -864,6 +876,16 @@ export class ThreePreview {
     host.replaceChildren(this.renderer.domElement);
     this.controls = new TrackballControls(this.camera, this.renderer.domElement);
     this.controls.target.set(0, 0, 0);
+    this.controls.addEventListener("start", () => {
+      this.isPointerInteracting = true;
+      this.requestRender();
+    });
+    this.controls.addEventListener("change", () => this.requestRender());
+    this.controls.addEventListener("end", () => {
+      this.isPointerInteracting = false;
+      this.requestRender();
+    });
+    this.renderer.domElement.addEventListener("wheel", () => this.requestRender(), { passive: true });
     this.model = new THREE.Group();
     this.scene.add(this.model);
     this.hemisphereLight = new THREE.HemisphereLight(
@@ -881,7 +903,7 @@ export class ThreePreview {
     this.directionalLight.lookAt(0, 0, 0);
     this.directionalLight.castShadow = false;
     this.scene.add(this.directionalLight);
-    this.paperMaterial = new THREE.MeshStandardMaterial({ color: "#ffffff", map: this.texture, roughness: 0.9, metalness: 0.5, side: THREE.FrontSide });
+    this.paperMaterial = new THREE.MeshStandardMaterial({ color: "#ffffff", map: null, roughness: 0.9, metalness: 0.5, side: THREE.FrontSide });
     // canvasB is the unprinted reverse side. The official material table does
     // not reuse canvasA here; doing so mirrored the complete net onto every
     // flap whose contour winding exposed its reverse face.
@@ -890,7 +912,7 @@ export class ThreePreview {
     // Plane renderer. They inherit the two face surfaces, but are double
     // sided because they are viewed edge-on. They must stay separate from the
     // corrugated cut-edge material.
-    this.foldPaperMaterial = new THREE.MeshStandardMaterial({ color: "#ffffff", map: this.texture, roughness: 0.9, metalness: 0.5, side: THREE.DoubleSide });
+    this.foldPaperMaterial = new THREE.MeshStandardMaterial({ color: "#ffffff", map: null, roughness: 0.9, metalness: 0.5, side: THREE.DoubleSide });
     this.foldBackPaperMaterial = new THREE.MeshStandardMaterial({ color: "#ffffff", map: null, roughness: 0.9, metalness: 0.5, side: THREE.DoubleSide });
     this.calTextureCanvas = document.createElement("canvas");
     this.calTextureCanvas.width = OFFICIAL_CAL_TEXTURE_WIDTH;
@@ -911,8 +933,18 @@ export class ThreePreview {
     this.calAtlasImage.src = officialCalAtlasUrl;
     this.refreshEdgeTexture();
 
-    rotationInput.addEventListener("input", () => this.setRotation(Number(rotationInput.value)));
-    foldInput.addEventListener("input", () => this.setFoldProgress(Number(foldInput.value)));
+    rotationInput.addEventListener("input", () => {
+      this.pendingRotation = Number(rotationInput.value);
+      this.rotationValue.textContent = `${Math.round(this.pendingRotation || 0)}°`;
+      this.scheduleSliderUpdate();
+    });
+    foldInput.addEventListener("input", () => {
+      this.pendingFoldProgress = Number(foldInput.value);
+      const clamped = Math.min(1, Math.max(0, this.pendingFoldProgress || 0));
+      this.foldValue.textContent = `${Math.round(clamped * 100)}%`;
+      this.foldButton.textContent = clamped >= 0.5 ? "展开刀模" : "折叠刀模";
+      this.scheduleSliderUpdate();
+    });
     foldButton.addEventListener("click", () => this.setFoldProgress(this.foldProgress >= 0.5 ? 0 : 1));
     resetButton.addEventListener("click", () => this.resetView());
     paperColorInput.addEventListener("input", () => this.refreshTexture());
@@ -923,18 +955,64 @@ export class ThreePreview {
       if (textureUrl) button.style.setProperty("--edge-texture-image", `url("${textureUrl}")`);
       button.addEventListener("click", () => this.setEdgeTexture(button.dataset.edgeTexture));
     }
-    this.resizeObserver = new ResizeObserver(() => this.resize());
+    this.resizeObserver = new ResizeObserver(() => {
+      if (this.isActive) this.resize();
+    });
     this.resizeObserver.observe(host);
-    this.resize();
     this.setRotation(Number(rotationInput.value));
     this.setDirectionalLight(Number(light1Input?.value ?? 80) / 100);
     this.setHemisphereLight(Number(light2Input?.value ?? 70) / 100);
     this.updateFoldControls();
     this.refreshTexture();
-    this.animate();
   }
 
-  setGeometry(geometry) {
+  setActive(active) {
+    const next = Boolean(active);
+    this.isActive = next;
+    if (!next) {
+      this.isPointerInteracting = false;
+      if (this.renderFrameId) {
+        cancelAnimationFrame(this.renderFrameId);
+        this.renderFrameId = 0;
+      }
+      if (this.sliderFrameId) {
+        cancelAnimationFrame(this.sliderFrameId);
+        this.sliderFrameId = 0;
+      }
+      return;
+    }
+    if (this.geometryDirty) {
+      this.applyPendingGeometry();
+    }
+    this.resize();
+    this.requestRender();
+  }
+
+  scheduleSliderUpdate() {
+    if (this.sliderFrameId) return;
+    const flush = () => {
+      this.sliderFrameId = 0;
+      if (this.pendingRotation !== null) {
+        const nextRotation = this.pendingRotation;
+        this.pendingRotation = null;
+        this.setRotation(nextRotation);
+      }
+      if (this.pendingFoldProgress !== null) {
+        const nextFold = this.pendingFoldProgress;
+        this.pendingFoldProgress = null;
+        this.setFoldProgress(nextFold);
+      }
+    };
+    if (typeof requestAnimationFrame === "function") {
+      this.sliderFrameId = requestAnimationFrame(flush);
+    } else {
+      flush();
+    }
+  }
+
+  applyPendingGeometry() {
+    const geometry = this.pendingGeometry;
+    this.geometryDirty = false;
     try {
       this.topology = geometry ? createBoxTopology(geometry) : null;
       this.geometry = this.topology ? geometry : null;
@@ -944,9 +1022,16 @@ export class ThreePreview {
     }
     this.thickness = this.geometry ? Math.max(0.2, Number(this.geometry.parameters?.caliper) || 0.2) : 0;
     this.foldProgress = 1;
-    this.foldInput.value = "1";
+    if (this.foldInput) this.foldInput.value = "1";
     this.updateFoldControls();
     this.rebuildModel();
+  }
+
+  setGeometry(geometry) {
+    this.pendingGeometry = geometry;
+    this.geometryDirty = true;
+    if (this.isActive === false) return;
+    this.applyPendingGeometry();
   }
 
   setTextureCanvas(canvas) {
@@ -956,32 +1041,68 @@ export class ThreePreview {
 
   refreshTexture() {
     const source = this.textureCanvas;
-    if (source) {
-      this.compositeCanvas.width = source.width;
-      this.compositeCanvas.height = source.height;
+    const paperColor = this.paperColorInput?.value || "#d7b78e";
+    if (!source) {
+      if (this.compositeCanvas && (this.compositeCanvas.width !== 1 || this.compositeCanvas.height !== 1)) {
+        this.compositeCanvas.width = 1;
+        this.compositeCanvas.height = 1;
+      }
+      const hadMap = Boolean(this.paperMaterial.map || this.foldPaperMaterial.map);
+      if (this.texture) {
+        this.texture.dispose();
+        this.texture = null;
+      }
+      this.paperMaterial.map = null;
+      this.paperMaterial.color.set(paperColor);
+      this.foldPaperMaterial.map = null;
+      this.foldPaperMaterial.color.set(paperColor);
+      if (hadMap) {
+        this.paperMaterial.needsUpdate = true;
+        this.foldPaperMaterial.needsUpdate = true;
+      }
+    } else {
+      const sizeChanged =
+        this.compositeCanvas.width !== source.width ||
+        this.compositeCanvas.height !== source.height;
+      if (sizeChanged) {
+        this.compositeCanvas.width = source.width;
+        this.compositeCanvas.height = source.height;
+      }
+      const context = this.compositeCanvas.getContext("2d");
+      context.clearRect(0, 0, this.compositeCanvas.width, this.compositeCanvas.height);
+      context.fillStyle = paperColor;
+      context.fillRect(0, 0, this.compositeCanvas.width, this.compositeCanvas.height);
+      context.drawImage(source, 0, 0);
+      if (!this.texture || sizeChanged) {
+        const previousTexture = this.texture;
+        this.texture = this.configureArtworkTexture(new THREE.CanvasTexture(this.compositeCanvas));
+        const mapChanged = this.paperMaterial.map !== this.texture;
+        this.paperMaterial.map = this.texture;
+        this.paperMaterial.color.set("#ffffff");
+        this.foldPaperMaterial.map = this.texture;
+        this.foldPaperMaterial.color.set("#ffffff");
+        if (mapChanged) {
+          this.paperMaterial.needsUpdate = true;
+          this.foldPaperMaterial.needsUpdate = true;
+        }
+        previousTexture?.dispose();
+      } else {
+        this.paperMaterial.color.set("#ffffff");
+        this.foldPaperMaterial.color.set("#ffffff");
+        this.texture.needsUpdate = true;
+      }
     }
-    const context = this.compositeCanvas.getContext("2d");
-    context.clearRect(0, 0, this.compositeCanvas.width, this.compositeCanvas.height);
-    context.fillStyle = this.paperColorInput.value;
-    context.fillRect(0, 0, this.compositeCanvas.width, this.compositeCanvas.height);
-    if (source) context.drawImage(source, 0, 0);
-    const previousTexture = this.texture;
-    this.texture = this.configureArtworkTexture(new THREE.CanvasTexture(this.compositeCanvas));
-    this.paperMaterial.map = this.texture;
-    this.paperMaterial.needsUpdate = true;
     this.backPaperMaterial.map = null;
-    this.backPaperMaterial.needsUpdate = true;
-    this.foldPaperMaterial.map = this.texture;
-    this.foldPaperMaterial.needsUpdate = true;
     this.foldBackPaperMaterial.map = null;
-    this.foldBackPaperMaterial.needsUpdate = true;
     // The reverse side has no artwork, but it is still the selected paper
     // stock. Keeping it white made a correctly generated fold cap resemble
     // an open crack against kraft-coloured faces.
-    this.backPaperMaterial.color.set(this.paperColorInput.value);
-    this.foldBackPaperMaterial.color.set(this.paperColorInput.value);
-    previousTexture.dispose();
-    this.refreshEdgeTexture();
+    this.backPaperMaterial.color.set(paperColor);
+    this.foldBackPaperMaterial.color.set(paperColor);
+    if (!(this.calAtlasImage?.complete && this.calAtlasImage.naturalWidth > 0)) {
+      this.refreshEdgeTexture();
+    }
+    this.requestRender();
   }
 
   setEdgeTexture(type) {
@@ -1046,7 +1167,7 @@ export class ThreePreview {
     }
     this.edgeTexture.needsUpdate = true;
     this.edgeMaterial.map = this.edgeTexture;
-    this.edgeMaterial.needsUpdate = true;
+    this.requestRender();
   }
 
   setRotation(value) {
@@ -1056,6 +1177,7 @@ export class ThreePreview {
     this.rotationInput.value = String(degrees);
     this.rotationValue.textContent = `${Math.round(degrees)}°`;
     this.centerModel();
+    this.requestRender();
   }
 
   setFoldProgress(value) {
@@ -1068,16 +1190,19 @@ export class ThreePreview {
     // visibly different drag response.
     this.updateFoldTransforms();
     this.centerModel();
+    this.requestRender();
   }
 
   setDirectionalLight(value) {
     // Modern physically-correct lights use PI-scaled values compared with
     // the legacy Three.js build used online.
     this.directionalLight.intensity = Math.max(0, Number(value) || 0) * Math.PI;
+    this.requestRender();
   }
 
   setHemisphereLight(value) {
     this.hemisphereLight.intensity = Math.max(0, Number(value) || 0) * Math.PI;
+    this.requestRender();
   }
 
   async downloadSnapshot(filename = "3D-view.png") {
@@ -1159,7 +1284,8 @@ export class ThreePreview {
             material !== this.edgeMaterial &&
             material !== this.backPaperMaterial &&
             material !== this.foldPaperMaterial &&
-            material !== this.foldBackPaperMaterial
+            material !== this.foldBackPaperMaterial &&
+            material !== this.wireframeMaterial
           ) material.dispose();
         }
       }
@@ -1171,8 +1297,20 @@ export class ThreePreview {
 
   rebuildModel(resetView = true) {
     this.clearModel();
-    if (!this.topology) return;
-    const source = this.textureCanvas || this.compositeCanvas;
+    if (!this.topology) {
+      this.requestRender?.();
+      return;
+    }
+    const bounds = this.topology.bounds;
+    const source = this.textureCanvas || {
+      width: Math.max(1, bounds.maxX - bounds.minX),
+      height: Math.max(1, bounds.maxY - bounds.minY),
+    };
+    const wireframeMaterial = (this.wireframeMaterial ||= new THREE.LineBasicMaterial({
+      color: "#8d755c",
+      transparent: true,
+      opacity: 0.45,
+    }));
     const planeGroups = new Map();
     const planeSpecs = new Map();
 
@@ -1239,7 +1377,7 @@ export class ThreePreview {
       ));
       const edges = new THREE.LineSegments(
         edgesForCorners(edgeCorners, edgeIndices, holeEdgeCorners),
-        new THREE.LineBasicMaterial({ color: "#8d755c", transparent: true, opacity: 0.45 }),
+        wireframeMaterial,
       );
       if (spec.foldOrigin) edges.position.set(-spec.foldOrigin.x, -spec.foldOrigin.y, 0);
       planeGroup.add(edges);
@@ -1247,6 +1385,7 @@ export class ThreePreview {
     this.updateFoldTransforms();
     this.centerModel();
     if (resetView) this.resetView(false);
+    this.requestRender?.();
   }
 
   updateFoldTransforms() {
@@ -1265,12 +1404,12 @@ export class ThreePreview {
     // identical without doing the same expensive bounds pass every frame.
     this.model.position.set(0, 0, 0);
     this.model.scale.setScalar(1);
-    const bounds = new THREE.Box3().setFromObject(this.model);
+    const bounds = (this._tmpBox3 ||= new THREE.Box3()).setFromObject(this.model);
     if (bounds.isEmpty()) return;
-    const center = bounds.getCenter(new THREE.Vector3());
+    const center = bounds.getCenter((this._tmpCenter ||= new THREE.Vector3()));
     this.model.position.copy(center.multiplyScalar(-1));
     if (this.topology.autoFitCamera) {
-      const size = bounds.getSize(new THREE.Vector3());
+      const size = bounds.getSize((this._tmpSize ||= new THREE.Vector3()));
       const visibleHeight = 2 * OFFICIAL_VIEWER_DEFAULTS.cameraZ * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
       const visibleWidth = visibleHeight * Math.max(0.1, this.camera.aspect || 1);
       const fitFraction = Math.min(0.95, Math.max(0.5, Number(this.topology.cameraFitFraction) || 0.84));
@@ -1298,6 +1437,7 @@ export class ThreePreview {
     this.camera.lookAt(0, 0, 0);
     this.camera.updateProjectionMatrix();
     this.controls.update();
+    this.requestRender();
   }
 
   resize() {
@@ -1308,24 +1448,33 @@ export class ThreePreview {
     this.renderer.setSize(width, height, false);
     this.controls.handleResize?.();
     if (this.topology?.autoFitCamera) this.centerModel();
+    this.requestRender();
   }
 
-  animate() {
-    requestAnimationFrame(() => this.animate());
-    this.controls.update();
-    this.renderer.render(this.scene, this.camera);
+  requestRender() {
+    if (!this.isActive || this.renderFrameId || !this.renderer) return;
+    this.renderFrameId = requestAnimationFrame(() => {
+      this.renderFrameId = 0;
+      if (!this.isActive) return;
+      this.controls.update();
+      this.renderer.render(this.scene, this.camera);
+      if (this.isPointerInteracting) this.requestRender();
+    });
   }
 
   dispose() {
+    if (this.renderFrameId) cancelAnimationFrame(this.renderFrameId);
+    if (this.sliderFrameId) cancelAnimationFrame(this.sliderFrameId);
     this.resizeObserver.disconnect();
     this.controls.dispose();
     this.renderer.dispose();
-    this.texture.dispose();
+    this.texture?.dispose();
     this.edgeTexture.dispose();
     this.paperMaterial.dispose();
     this.backPaperMaterial.dispose();
     this.foldPaperMaterial.dispose();
     this.foldBackPaperMaterial.dispose();
     this.edgeMaterial.dispose();
+    this.wireframeMaterial?.dispose();
   }
 }

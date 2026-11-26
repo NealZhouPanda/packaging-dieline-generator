@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createRequire } from "node:module";
-import {
-  generate0201,
-  generateE005C,
-  generateC001GX,
-} from "../src/generators-legacy.js";
-import { generate0421 } from "../src/generator0421.js";
-import { generateK016A } from "../src/generatorK016A.js";
+import { generate0201 } from "../src/generator0201.js";
+import { UI_BOX_DEFINITIONS } from "../src/boxes/registry.js";
 import { geometryToPdf } from "../src/pdf.js";
 
 const require = createRequire(import.meta.url);
@@ -120,27 +115,20 @@ describe("PDF 打样提醒须完整位于页内（真实 PDF 解析）", () => {
     expect(line).toContain("已超抛");
   });
 
-  it("5 种真实盒型：提醒完整文本在页内", async () => {
-    const cases = [
-      ["0201", generate0201, { length: 350, width: 190, depth: 230, caliper: 5 }],
-      ["E005C", generateE005C, { length: 300, width: 200, depth: 150, caliper: 3 }],
-      ["C001GX", generateC001GX, { length: 320, width: 220, depth: 180, caliper: 3 }],
-      ["0421", generate0421, { length: 300, width: 200, depth: 120, caliper: 3 }],
-      ["K016A", generateK016A, { length: 250, width: 150, depth: 100, caliper: 3 }],
-    ];
-    for (const [type, fn, params] of cases) {
-      const geometry = fn(params);
+  it("全部 7 款界面盒型：提醒完整文本在页内", async () => {
+    for (const def of UI_BOX_DEFINITIONS) {
+      const geometry = def.generate(def.defaults);
       const bytes = geometryToPdf(geometry, {
-        filename: `${type}_默认`,
+        filename: `${def.id}_默认`,
         date: "2026-09-26",
       });
       const { pageHeight, pageWidth, items } = await extractText(bytes);
       const note = noteItems(items);
-      expect(note.length, `${type} 应含打样提醒`).toBeGreaterThan(0);
+      expect(note.length, `${def.id} 应含打样提醒`).toBeGreaterThan(0);
       for (const item of note) {
-        expect(item.y, `${type} 提醒 y=${item.y} 超出页高 ${pageHeight}`).toBeLessThanOrEqual(pageHeight);
+        expect(item.y, `${def.id} 提醒 y=${item.y} 超出页高 ${pageHeight}`).toBeLessThanOrEqual(pageHeight);
         expect(item.y).toBeGreaterThanOrEqual(0);
-        expect(item.x + item.w, `${type} 提醒超出右边界`).toBeLessThanOrEqual(pageWidth);
+        expect(item.x + item.w, `${def.id} 提醒超出右边界`).toBeLessThanOrEqual(pageWidth);
       }
     }
   });
